@@ -5,7 +5,7 @@ import numpy as np
 
 disease_list=pd.read_csv('/home/liukang/Doc/disease_top_31.csv')
 # txt_path
-txt_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/'
+txt_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/random_sampling_auc_result.txt'
 
 for data_num in [1]:
     # test data
