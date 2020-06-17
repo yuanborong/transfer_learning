@@ -33,6 +33,8 @@ for data_num in [1]:
         sample_size = sample_size[:10]
 
         for frac in sample_size:
+            print(frac)
+            print(sample_size)
             auc_list = []
 
             # random sampling for test auc
