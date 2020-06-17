@@ -53,7 +53,7 @@ for data_num in [1]:
 
         # 每次写之前都进行读，那么久不会覆盖
         f_reuslt = open(txt_path, 'r+')
-        f_reuslt.write(disease_list.iloc[disease_num, 0].astype(str) + ': [' )
+        f_reuslt.write(disease_list.iloc[disease_num, 0] + ': [' )
         f_reuslt.write("  ".join(auc_list) + "]/n")
         f_reuslt.close()
 
