@@ -17,8 +17,8 @@ for data_num in [1]:
     for i in range(1 , 21):
         sample_size.append(i * 0.05)
 
-    for disease_num in range(disease_list.shape[0]):
-    # for disease_num in [0]:
+    # for disease_num in range(disease_list.shape[0]):
+    for disease_num in [0]:
         # find patients with a certain disease
         train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         train_meaningful_sample = train_ori.loc[train_feature_true]
@@ -31,11 +31,11 @@ for data_num in [1]:
         y_test = test_meaningful_sample['Label']
 
         sample_size = sample_size[:10]
+        auc_list = []
 
         for frac in sample_size:
-            print(frac)
-            print(sample_size)
-            auc_list = []
+            # print(frac)
+            # print(sample_size)
 
             # random sampling for test auc
             random_sampling_train_meaningful_sample = train_meaningful_sample.sample(frac=frac, axis=0)
