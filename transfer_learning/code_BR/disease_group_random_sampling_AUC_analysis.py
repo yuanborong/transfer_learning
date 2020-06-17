@@ -17,8 +17,8 @@ for data_num in [1]:
     for i in range(1 , 21):
         sample_size.append(i * 0.05)
 
-    # for disease_num in range(disease_list.shape[0]):
-    for disease_num in [0]:
+    for disease_num in range(disease_list.shape[0]):
+    # for disease_num in [0]:
         # find patients with a certain disease
         train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         train_meaningful_sample = train_ori.loc[train_feature_true]
