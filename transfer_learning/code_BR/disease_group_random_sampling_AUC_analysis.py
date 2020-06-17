@@ -19,7 +19,7 @@ for data_num in [1]:
         sample_size.append(i * 0.05)
 
     # for disease_num in range(disease_list.shape[0]):
-    for disease_num in [0]:
+    for disease_num in [0 , 1 , 2]:
         # find patients with a certain disease
         train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         train_meaningful_sample = train_ori.loc[train_feature_true]
@@ -46,7 +46,7 @@ for data_num in [1]:
             y_predict = lr_DG_ran_smp.predict(X_test)
             auc = roc_auc_score(y_test, y_predict)
 
-            auc_list.append(auc)
+            auc_list.append(round(auc , 6))
 
         print(len(auc_list))
         print(auc_list)
@@ -55,7 +55,7 @@ for data_num in [1]:
         f_reuslt = open(txt_path, 'w')
         f_reuslt.write(disease_list.iloc[disease_num, 0] + ': ' )
         f_reuslt.write(str(auc_list))
-        f_reuslt.write('/n')
+        f_reuslt.write('\n')
         f_reuslt.close()
 
 print("Done........")
