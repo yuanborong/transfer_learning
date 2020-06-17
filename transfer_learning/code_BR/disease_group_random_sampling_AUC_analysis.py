@@ -1,7 +1,8 @@
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
-import json
+import warnings
+warnings.filterwarnings('ignore')
 
 disease_list=pd.read_csv('/home/liukang/Doc/disease_top_31.csv')
 # txt_path
@@ -30,13 +31,10 @@ for data_num in [1]:
         X_test = test_meaningful_sample.drop(['Label'], axis=1)
         y_test = test_meaningful_sample['Label']
 
-        sample_size = sample_size[:10]
+        # sample_size = sample_size[:10]
         auc_list = []
 
         for frac in sample_size:
-            # print(frac)
-            # print(sample_size)
-
             # random sampling for test auc
             random_sampling_train_meaningful_sample = train_meaningful_sample.sample(frac=frac, axis=0)
             X_train = random_sampling_train_meaningful_sample.drop(['Label'], axis=1)
@@ -59,4 +57,6 @@ for data_num in [1]:
         f_reuslt.write(str(auc_list))
         f_reuslt.write('/n')
         f_reuslt.close()
+
+print("Done........")
 
