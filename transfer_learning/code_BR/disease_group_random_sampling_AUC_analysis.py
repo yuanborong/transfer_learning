@@ -18,6 +18,8 @@ for data_num in [1]:
     for i in range(1 , 21):
         sample_size.append(i * 0.05)
 
+    f_reuslt = open(txt_path, 'a')
+
     # for disease_num in range(disease_list.shape[0]):
     for disease_num in [0 , 1 , 2]:
         # find patients with a certain disease
@@ -52,11 +54,12 @@ for data_num in [1]:
         print(auc_list)
 
         # 每次写之前都进行读，那么久不会覆盖
-        f_reuslt = open(txt_path, 'w')
+
         f_reuslt.write(disease_list.iloc[disease_num, 0] + ': ' )
         f_reuslt.write(str(auc_list))
         f_reuslt.write('\n')
-        f_reuslt.close()
+
+    f_reuslt.close()
 
 print("Done........")
 
