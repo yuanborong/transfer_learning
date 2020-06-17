@@ -8,7 +8,7 @@ disease_list=pd.read_csv('/home/liukang/Doc/disease_top_31.csv')
 # txt_path
 txt_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/random_sampling_auc_result.txt'
 
-for data_num in [1]:
+for data_num in range(1 , 5):
     # test data
     test_ori = pd.read_csv('/home/liukang/Doc/valid_df/test_{}.csv'.format(data_num))
     # training data
@@ -18,8 +18,13 @@ for data_num in [1]:
     for i in range(1 , 21):
         sample_size.append(i * 0.05)
 
-    # for disease_num in range(disease_list.shape[0]):
-    for disease_num in [0 , 1 , 2]:
+    f_reuslt = open(txt_path, 'a+')
+    f_reuslt.write('data_{}_result'.format(data_num))
+    f_reuslt.write('\n')
+    f_reuslt.close()
+
+    for disease_num in range(disease_list.shape[0]):
+    # for disease_num in [0 , 1 , 2]:
         # find patients with a certain disease
         train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         train_meaningful_sample = train_ori.loc[train_feature_true]
