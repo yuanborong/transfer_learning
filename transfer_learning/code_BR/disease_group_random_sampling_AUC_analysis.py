@@ -4,6 +4,8 @@ from sklearn.metrics import roc_auc_score
 import numpy as np
 
 disease_list=pd.read_csv('/home/liukang/Doc/disease_top_31.csv')
+# txt_path
+txt_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/'
 
 for data_num in [1]:
     # test data
@@ -11,7 +13,9 @@ for data_num in [1]:
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
 
-    sample_size = [np.linspace(0.05, 1, 20, endpoint=True)]
+    sample_size = []
+    for i in range(1 , 21):
+        sample_size.append(i * 0.05)
 
     # for disease_num in range(disease_list.shape[0]):
     for disease_num in [0]:
@@ -46,4 +50,10 @@ for data_num in [1]:
 
         print(len(auc_list))
         print(auc_list)
+
+        # 每次写之前都进行读，那么久不会覆盖
+        f_reuslt = open(txt_path, 'r+')
+        f_reuslt.write(disease_list.iloc[disease_num, 0].astype(str) + ': [' )
+        f_reuslt.write("  ".join(auc_list) + "]/n")
+        f_reuslt.close()
 
