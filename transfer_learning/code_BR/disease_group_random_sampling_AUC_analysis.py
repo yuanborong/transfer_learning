@@ -72,5 +72,7 @@ for data_num in range(1 , 6):
 
 auc_mean_dataframe = auc_mean_dataframe.apply(lambda x : round(x / 5 , 6))
 
+mean_auc_csv_name = 'random_sampling_mean_auc_result_data.csv'
+auc_dataframe.to_csv(csv_path + mean_auc_csv_name)
 
 print("Done........")
