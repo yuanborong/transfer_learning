@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
 import warnings
+import numpy as np
 warnings.filterwarnings('ignore')
 
 disease_list=pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
@@ -40,8 +41,6 @@ for data_num in range(1 , 6):
         X_test = test_meaningful_sample.drop(['Label'], axis=1)
         y_test = test_meaningful_sample['Label']
 
-        auc_list = []
-
         print('\nBegin ' + str(disease_list.iloc[disease_num, 0]) + '.......\n\n')
 
         # 按不同的sample_size，df.sample进行随机抽样
@@ -51,16 +50,18 @@ for data_num in range(1 , 6):
             X_train = random_sampling_train_meaningful_sample.drop(['Label'], axis=1)
             y_train = random_sampling_train_meaningful_sample['Label']
 
-            # build LR model for random sampling
-            lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
-            lr_DG_ran_smp.fit(X_train, y_train)
-            y_predict = lr_DG_ran_smp.predict(X_test)
-            auc = roc_auc_score(y_test, y_predict)
+            auc_list = []
 
-            auc_dataframe.loc[disease_list.iloc[disease_num, 0] , frac] = round(auc , 6)
-            # AUC保留6位小数
-            auc_list.append(round(auc , 6))
-            print('Sample size ' + str(frac * 100) + '% has completed.........')
+            # 对一个数据集下的一个亚组的某个比例样本集，进行10次的建模取平均
+            for i in range(0 , 10):
+                # build LR model for random sampling
+                lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
+                lr_DG_ran_smp.fit(X_train, y_train)
+                y_predict = lr_DG_ran_smp.predict_proba(X_test)[: , 1]
+                auc = roc_auc_score(y_test, y_predict)
+                auc_list.append(auc)
+
+            auc_dataframe.loc[disease_list.iloc[disease_num, 0] , frac] = round(np.mean(auc_list) , 6)
 
     csv_name = 'random_sampling_auc_result_data_{}.csv'.format(data_num)
     auc_dataframe.to_csv(csv_path + csv_name)
