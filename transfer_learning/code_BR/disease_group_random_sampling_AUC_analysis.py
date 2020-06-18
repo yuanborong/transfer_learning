@@ -5,8 +5,8 @@ import warnings
 warnings.filterwarnings('ignore')
 
 disease_list=pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
-# txt_path
-txt_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/random_sampling_auc_result.txt'
+# csv_path
+csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/'
 
 for data_num in range(1 , 5):
     # test data
@@ -20,10 +20,12 @@ for data_num in range(1 , 5):
         sample_size.append(i * 0.05)
 
     # 写入结果文件，题头（data_1 , data_2）
-    f_reuslt = open(txt_path, 'a+')
-    f_reuslt.write('data_{}_result'.format(data_num))
-    f_reuslt.write('\n')
-    f_reuslt.close()
+    # f_reuslt = open(txt_path, 'a+')
+    # f_reuslt.write('data_{}_result'.format(data_num))
+    # f_reuslt.write('\n')
+    # f_reuslt.close()
+
+    auc_dataframe = pd.DataFrame(index=disease_list , columns=sample_size)
 
     for disease_num in range(disease_list.shape[0]):
         # find patients with a certain disease
@@ -52,19 +54,23 @@ for data_num in range(1 , 5):
             y_predict = lr_DG_ran_smp.predict(X_test)
             auc = roc_auc_score(y_test, y_predict)
 
+            auc_dataframe.loc[disease_num , frac] = round(auc)
             # AUC保留6位小数
             auc_list.append(round(auc , 6))
 
         print(len(auc_list))
         print(auc_list)
 
-        # 每次写之前都进行读，那么久不会覆盖
-        # auc结果写入文件
-        f_reuslt = open(txt_path, 'a+')
-        f_reuslt.write(disease_list.iloc[disease_num, 0] + ': ' )
-        f_reuslt.write(str(auc_list))
-        f_reuslt.write('\n')
-        f_reuslt.close()
+    csv_name = 'random_sampling_auc_result_data_{}.csv'.format(data_num)
+    auc_dataframe.to_csv(csv_path + csv_name)
+
 
 print("Done........")
 
+# 每次写之前都进行读，那么久不会覆盖
+        # auc结果写入文件
+        # f_reuslt = open(txt_path, 'a+')
+        # f_reuslt.write(disease_list.iloc[disease_num, 0] + ': ' )
+        # f_reuslt.write(str(auc_list))
+        # f_reuslt.write('\n')
+        # f_reuslt.close()
