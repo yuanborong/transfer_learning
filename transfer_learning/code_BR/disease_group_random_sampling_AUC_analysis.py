@@ -54,7 +54,7 @@ for data_num in range(1 , 5):
             y_predict = lr_DG_ran_smp.predict(X_test)
             auc = roc_auc_score(y_test, y_predict)
 
-            auc_dataframe.loc[disease_num , frac] = round(auc)
+            auc_dataframe.iloc[disease_list.iloc[disease_num, 0] , frac] = round(auc , 6)
             # AUC保留6位小数
             auc_list.append(round(auc , 6))
 
