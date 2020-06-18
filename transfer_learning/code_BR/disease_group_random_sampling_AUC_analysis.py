@@ -15,6 +15,7 @@ for i in range(2 , 21):
     sample_size.append(i * 0.05)
 
 auc_mean_dataframe = pd.DataFrame( np.ones((len(disease_list),len(sample_size)))*0 , index=disease_list.iloc[: , 0] , columns=sample_size)
+auc_mean_dataframe = auc_mean_dataframe.apply(lambda x : round(x / 5 , 6))
 
 print(auc_mean_dataframe)
 
