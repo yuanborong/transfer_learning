@@ -4,7 +4,7 @@ from sklearn.metrics import roc_auc_score
 import warnings
 warnings.filterwarnings('ignore')
 
-disease_list=pd.read_csv('/home/liukang/Doc/disease_top_31.csv')
+disease_list=pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # txt_path
 txt_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/random_sampling_auc_result.txt'
 
@@ -14,17 +14,18 @@ for data_num in range(1 , 5):
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
 
+    # 生成不同的随机抽样比例
     sample_size = []
-    for i in range(1 , 21):
+    for i in range(2 , 21):
         sample_size.append(i * 0.05)
 
+    # 写入结果文件，题头（data_1 , data_2）
     f_reuslt = open(txt_path, 'a+')
     f_reuslt.write('data_{}_result'.format(data_num))
     f_reuslt.write('\n')
     f_reuslt.close()
 
     for disease_num in range(disease_list.shape[0]):
-    # for disease_num in [0 , 1 , 2]:
         # find patients with a certain disease
         train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         train_meaningful_sample = train_ori.loc[train_feature_true]
@@ -36,9 +37,9 @@ for data_num in range(1 , 5):
         X_test = test_meaningful_sample.drop(['Label'], axis=1)
         y_test = test_meaningful_sample['Label']
 
-        # sample_size = sample_size[:10]
         auc_list = []
 
+        # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
             # random sampling for test auc
             random_sampling_train_meaningful_sample = train_meaningful_sample.sample(frac=frac, axis=0)
@@ -51,12 +52,14 @@ for data_num in range(1 , 5):
             y_predict = lr_DG_ran_smp.predict(X_test)
             auc = roc_auc_score(y_test, y_predict)
 
+            # AUC保留6位小数
             auc_list.append(round(auc , 6))
 
         print(len(auc_list))
         print(auc_list)
 
         # 每次写之前都进行读，那么久不会覆盖
+        # auc结果写入文件
         f_reuslt = open(txt_path, 'a+')
         f_reuslt.write(disease_list.iloc[disease_num, 0] + ': ' )
         f_reuslt.write(str(auc_list))
