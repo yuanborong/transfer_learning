@@ -26,7 +26,7 @@ for data_num in range(1 , 5):
     # f_reuslt.close()
 
     print('\nBegin data_' + str(data_num) +'.......\n\n')
-    auc_dataframe = pd.DataFrame(index=disease_list.loc[: , 0] , columns=sample_size)
+    auc_dataframe = pd.DataFrame(index=disease_list.iloc[: , 0] , columns=sample_size)
 
     for disease_num in range(disease_list.shape[0]):
         # find patients with a certain disease
