@@ -15,9 +15,8 @@ for i in range(2 , 21):
     sample_size.append(i * 0.05)
 
 auc_mean_dataframe = pd.DataFrame( np.ones((len(disease_list),len(sample_size)))*0 , index=disease_list.iloc[: , 0] , columns=sample_size)
-auc_mean_dataframe = auc_mean_dataframe.apply(lambda x : round(x / 5 , 6))
 
-print(auc_mean_dataframe)
+# print(auc_mean_dataframe)
 
 for data_num in range(1 , 6):
     # test data
@@ -46,7 +45,9 @@ for data_num in range(1 , 6):
 
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
+            print('    Sample_size ' + str(frac) + ' begin.......\n')
             for i in range(0, 10):
+                print('        itrerator ' + str(i) + ' begin.......\n')
                 # random sampling for test auc
                 random_sampling_train_meaningful_sample = train_meaningful_sample.sample(frac=frac, axis=0)
                 X_train = random_sampling_train_meaningful_sample.drop(['Label'], axis=1)
