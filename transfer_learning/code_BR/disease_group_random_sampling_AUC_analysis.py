@@ -8,7 +8,7 @@ disease_list=pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
 csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/'
 
-for data_num in range(1 , 5):
+for data_num in range(1 , 6):
     # test data
     test_ori = pd.read_csv('/home/liukang/Doc/valid_df/test_{}.csv'.format(data_num))
     # training data
@@ -59,7 +59,7 @@ for data_num in range(1 , 5):
             # AUC保留6位小数
             auc_list.append(round(auc , 6))
 
-        print('Sample size ' + str(frac) + ' has completed.........')
+        print('Sample size ' + str(frac * 100) + '% has completed.........')
 
     csv_name = 'random_sampling_auc_result_data_{}.csv'.format(data_num)
     auc_dataframe.to_csv(csv_path + csv_name)
