@@ -25,7 +25,8 @@ for data_num in range(1 , 5):
     # f_reuslt.write('\n')
     # f_reuslt.close()
 
-    auc_dataframe = pd.DataFrame(index=disease_list , columns=sample_size)
+    print('\nBegin data_' + data_num +'.......\n\n')
+    auc_dataframe = pd.DataFrame(index=disease_list.loc[: , 0] , columns=sample_size)
 
     for disease_num in range(disease_list.shape[0]):
         # find patients with a certain disease
@@ -58,11 +59,12 @@ for data_num in range(1 , 5):
             # AUC保留6位小数
             auc_list.append(round(auc , 6))
 
-        print(len(auc_list))
-        print(auc_list)
+        print('Sample size ' + frac + ' has completed.........')
 
     csv_name = 'random_sampling_auc_result_data_{}.csv'.format(data_num)
     auc_dataframe.to_csv(csv_path + csv_name)
+
+    print('\nFinish data_' + data_num +'.......\n\n')
 
 
 print("Done........")
