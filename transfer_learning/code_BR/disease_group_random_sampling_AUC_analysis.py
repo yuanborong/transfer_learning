@@ -42,6 +42,8 @@ for data_num in range(1 , 6):
 
         auc_list = []
 
+        print('\nBegin ' + str(disease_list.iloc[disease_num, 0]) + '.......\n\n')
+
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
             # random sampling for test auc
@@ -58,8 +60,7 @@ for data_num in range(1 , 6):
             auc_dataframe.loc[disease_list.iloc[disease_num, 0] , frac] = round(auc , 6)
             # AUC保留6位小数
             auc_list.append(round(auc , 6))
-
-        print('Sample size ' + str(frac * 100) + '% has completed.........')
+            print('Sample size ' + str(frac * 100) + '% has completed.........')
 
     csv_name = 'random_sampling_auc_result_data_{}.csv'.format(data_num)
     auc_dataframe.to_csv(csv_path + csv_name)
