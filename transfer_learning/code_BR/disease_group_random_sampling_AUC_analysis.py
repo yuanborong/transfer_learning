@@ -46,14 +46,13 @@ for data_num in range(1 , 6):
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
             print('    Sample_size ' + str(frac) + ' begin.......\n')
+            auc_list = []
             for i in range(0, 10):
                 print('        itrerator ' + str(i) + ' begin.......\n')
                 # random sampling for test auc
                 random_sampling_train_meaningful_sample = train_meaningful_sample.sample(frac=frac, axis=0)
                 X_train = random_sampling_train_meaningful_sample.drop(['Label'], axis=1)
                 y_train = random_sampling_train_meaningful_sample['Label']
-
-                auc_list = []
 
                 # build LR model for random sampling
                 lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
