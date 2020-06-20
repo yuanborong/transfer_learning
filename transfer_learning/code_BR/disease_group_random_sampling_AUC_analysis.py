@@ -7,7 +7,7 @@ warnings.filterwarnings('ignore')
 
 disease_list=pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
-csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/'
+csv_path = '/home/liukang/Doc/transfer_learning/'
 
 # 生成不同的随机抽样比例
 sample_size = []
@@ -46,21 +46,30 @@ for data_num in range(1 , 6):
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
             print('    Sample_size ' + str(frac) + ' begin.......\n')
+            
             auc_list = []
-            for i in range(0, 10):
+            i = 0
+            while i < 10:
                 print('        itrerator ' + str(i) + ' begin.......\n')
+                    
                 # random sampling for test auc
                 random_sampling_train_meaningful_sample = train_meaningful_sample.sample(frac=frac, axis=0)
                 X_train = random_sampling_train_meaningful_sample.drop(['Label'], axis=1)
                 y_train = random_sampling_train_meaningful_sample['Label']
-
+                
                 # build LR model for random sampling
                 lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
-                lr_DG_ran_smp.fit(X_train, y_train)
+                try:
+                    lr_DG_ran_smp.fit(X_train, y_train)
+                except Exception:
+                    print('restart')
+                    continue
                 y_predict = lr_DG_ran_smp.predict_proba(X_test)[: , 1]
                 auc = roc_auc_score(y_test, y_predict)
                 auc_list.append(auc)
-
+                i=i+1
+            
+            
             auc_dataframe.loc[disease_list.iloc[disease_num, 0] , frac] = round(np.mean(auc_list) , 3)
             auc_mean_dataframe.loc[disease_list.iloc[disease_num, 0] , frac] += np.mean(auc_list)
 
