@@ -22,7 +22,8 @@ for i in range(2, 21):
 auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
                                   columns=sample_size)
 # 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
-auc_global_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=['auc_by_gloabl_model'])
+auc_global_dataframe_columns = ['data_1' , 'data_2' , 'data_3' , 'data_4' , 'data_5' , 'mean_result']
+auc_global_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=auc_global_dataframe_columns)
 
 for data_num in range(1, 6):
     # set each data result csv's name
@@ -61,7 +62,7 @@ for data_num in range(1, 6):
         # use global model to predict each group disease's AUC
         y_predict_by_global_model = lr_All.predict_proba(X_test)[: , 1]
         auc_by_global_model = roc_auc_score(y_test , y_predict_by_global_model)
-        auc_global_dataframe.loc[disease_list.iloc[disease_num , 0] , 'auc_by_gloabl_model'] = auc_by_global_model
+        auc_global_dataframe.loc[disease_list.iloc[disease_num , 0] , auc_global_dataframe_columns[data_num - 1]] = auc_by_global_model
 
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
@@ -97,6 +98,7 @@ for data_num in range(1, 6):
 
 auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
 auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name)
+auc_global_dataframe['mean_result'] = np.mean(auc_global_dataframe.data_1 + auc_global_dataframe.data_2 + auc_global_dataframe.data_3 + auc_global_dataframe.data_4 + auc_global_dataframe.data_5)
 auc_global_dataframe.to_csv(csv_path + auc_by_global_model_csv_name)
 
 print("Done........")
