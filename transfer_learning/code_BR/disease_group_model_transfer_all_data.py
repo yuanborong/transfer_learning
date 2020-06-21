@@ -10,14 +10,18 @@ disease_list = pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 csv_path = '/home/liukang/Doc/transfer_learning/'
 #
 mean_auc_csv_name = 'transfer_all_data_mean.csv'
+auc_by_global_model_csv_name = 'group_disease_data_by_global_model.csv'
 
 # 生成不同的随机抽样比例
 sample_size = []
 for i in range(2, 21):
     sample_size.append(i * 0.05)
 
+# 创建一个5折交叉平均的df
 auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
                                   columns=sample_size)
+# 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
+auc_global_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=['auc_by_gloabl_model'])
 
 for data_num in range(1, 6):
     # set each data result csv's name
@@ -53,6 +57,11 @@ for data_num in range(1, 6):
         # transfer to X_test
         fit_test = X_test * Weight_importance_all_data
 
+        # use global model to predict each group disease's AUC
+        y_predict_by_global_model = lr_All.predict_proba(X_test)[: , 1]
+        auc_by_global_model = roc_auc_score(y_test , y_predict_by_global_model)
+        auc_global_dataframe.loc[disease_list.iloc[disease_num , 0] , 'auc_by_gloabl_model'] = auc_by_global_model
+
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
             auc_list = []
@@ -87,5 +96,6 @@ for data_num in range(1, 6):
 
 auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
 auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name)
+auc_global_dataframe.to_csv(csv_path + auc_by_global_model_csv_name)
 
 print("Done........")
