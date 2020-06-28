@@ -100,7 +100,7 @@ for multiple in arr_multiple_weight:
                 auc_mean_dataframe.loc[disease_list.iloc[disease_num, 0], frac] += np.mean(auc_list)
 
     auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
-    auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name + "_{}".format(multiple))
+    auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name + "_{}.csv".format(multiple))
     # auc_global_dataframe['mean_result'] = auc_global_dataframe[["data_1", "data_2", "data_3", "data_4", "data_5"]].mean(
     #     axis=1)
     # auc_global_dataframe.to_csv(csv_path + auc_by_global_model_csv_name)
