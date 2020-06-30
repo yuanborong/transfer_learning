@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 disease_list=pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
 # csv_path = '/home/liukang/Doc/transfer_learning/'
-csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/GBM'
+csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/GBM/'
 
 # 生成不同的随机抽样比例
 sample_size = []
