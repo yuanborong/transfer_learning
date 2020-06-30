@@ -28,16 +28,15 @@ disease_list = pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
 # csv_path = '/home/liukang/Doc/transfer_learning/'
 csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/GBM/'
-#
-mean_auc_csv_name = 'transfer_all_data_mean.csv'
-auc_by_global_model_csv_name = 'group_disease_data_by_global_model_with_all_data.csv'
+# set data result csv's name
+mean_auc_csv_name = 'transfer_without_group_data_mean.csv'
+auc_by_global_model_csv_name = 'group_disease_data_by_global_model_without_group_data.csv'
 
 # 生成不同的随机抽样比例
 sample_size = []
 for i in range(2, 21):
     sample_size.append(i * 0.05)
 
-# 创建一个5折交叉平均的df
 auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
                                   columns=sample_size)
 # 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
@@ -46,28 +45,32 @@ auc_global_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=auc_g
 
 for data_num in range(1, 6):
     # set each data result csv's name
-    csv_name = 'transfer_all_data_{}.csv'.format(data_num)
+    csv_name = 'transfer_without_group_data_{}.csv'.format(data_num)
     # test data
     test_ori = pd.read_csv('/home/liukang/Doc/valid_df/test_{}.csv'.format(data_num))
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
     # print('\nBegin data_' + str(data_num) + '.......\n\n')
 
-    X_train_all_data = train_ori.drop(['Label'], axis=1)
-    y_train_all_data = train_ori['Label']
-
-    # learn global model
-    # lr_All = LogisticRegression(n_jobs=-1)
-    gbm_All = GradientBoostingClassifier(n_estimators=ori_round, learning_rate=0.1,subsample=0.8,loss='deviance',max_features='sqrt',max_depth=3,min_samples_split=10,min_samples_leaf=3,min_weight_fraction_leaf=0,random_state=10)
-    gbm_All.fit(X_train_all_data, y_train_all_data)
-
-    # knowledge used for transfer
-    gbm_ori = gbm_init(gbm_All)
-
     # 初始化一个新的auc_dataframe
     auc_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=sample_size)
 
     for disease_num in range(disease_list.shape[0]):
+        # find patients without a certain disease
+        train_feature_false = (train_ori.loc[:, disease_list.iloc[disease_num, 0]] == 0)
+        train_non_meaningful_sample = train_ori.loc[train_feature_false]
+        X_train_expect_this_group = train_non_meaningful_sample.drop(['Label'], axis=1)
+        y_train_expect_this_group = train_non_meaningful_sample['Label']
+
+        # learn global data without this group model
+        # lr_All_expect_this_disease_group = LogisticRegression(n_jobs=-1)
+        # lr_All_expect_this_disease_group.fit(X_train_expect_this_group , y_train_expect_this_group)
+        gbm_All_expect_this_disease_group = GradientBoostingClassifier(n_estimators=ori_round, learning_rate=0.1,subsample=0.8,loss='deviance',max_features='sqrt',max_depth=3,min_samples_split=10,min_samples_leaf=3,min_weight_fraction_leaf=0,random_state=10)
+        gbm_All_expect_this_disease_group.fit(X_train_expect_this_group , y_train_expect_this_group)
+
+        # knowledge used for transfer
+        gbm_ori = gbm_init(gbm_All_expect_this_disease_group)
+
         # find patients with a certain disease
         train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         train_meaningful_sample = train_ori.loc[train_feature_true]
@@ -77,12 +80,12 @@ for data_num in range(1, 6):
         X_test = test_meaningful_sample.drop(['Label'], axis=1)
         y_test = test_meaningful_sample['Label']
         # transfer to X_test
-        # fit_test = X_test * Weight_importance_all_data
+        # fit_test = X_test * Weight_importance_all_data_expect_group
 
         # use global model to predict each group disease's AUC
-        y_predict_by_global_model = gbm_All.predict_proba(X_test)[: , 1]
-        auc_by_global_model = roc_auc_score(y_test , y_predict_by_global_model)
-        auc_global_dataframe.loc[disease_list.iloc[disease_num , 0] , auc_global_dataframe_columns[data_num - 1]] = round(auc_by_global_model , 3)
+        y_predict_by_global_model = gbm_All_expect_this_disease_group.predict_proba(X_test)[:, 1]
+        auc_by_global_model = roc_auc_score(y_test, y_predict_by_global_model)
+        auc_global_dataframe.loc[disease_list.iloc[disease_num, 0], auc_global_dataframe_columns[data_num - 1]] = round(auc_by_global_model , 3)
 
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
@@ -95,9 +98,9 @@ for data_num in range(1, 6):
                 y_train = random_sampling_train_meaningful_sample['Label']
 
                 # transfer to X_train
-                # fit_train = X_train * Weight_importance_all_data
+                # fit_train = X_train * Weight_importance_all_data_expect_group
 
-                # build GBM model for random sampling with tranfser
+                # build GBM model for random sampling with transfer
                 gbm_DG_ran_smp = GradientBoostingClassifier(init=gbm_ori,n_estimators=target_round, learning_rate=0.1,subsample=0.8,loss='deviance',max_features='sqrt',max_depth=3,min_samples_split=10,min_samples_leaf=3,min_weight_fraction_leaf=0,random_state=10)
                 try:
                     gbm_DG_ran_smp.fit(X_train, y_train)
@@ -112,13 +115,12 @@ for data_num in range(1, 6):
             auc_dataframe.loc[disease_list.iloc[disease_num, 0], frac] = round(np.mean(auc_list), 3)
             auc_mean_dataframe.loc[disease_list.iloc[disease_num, 0], frac] += np.mean(auc_list)
 
-    auc_dataframe.to_csv(csv_path + csv_name)
 
-    print('\nFinish data_' + str(data_num) + '.......\n\n')
+    auc_dataframe.to_csv(csv_path + csv_name)
 
 auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
 auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name)
 auc_global_dataframe['mean_result'] = auc_global_dataframe[["data_1" , "data_2" , "data_3" , "data_4" , "data_5"]].mean(axis=1)
-auc_global_dataframe.to_csv(csv_path + auc_by_global_model_csv_name)
+auc_global_dataframe.to_csv(csv_path , auc_by_global_model_csv_name)
 
-print("Done........")
+print("/n/nDone......../n/n")
