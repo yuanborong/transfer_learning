@@ -7,12 +7,13 @@ warnings.filterwarnings('ignore')
 
 def get_true_sample(dataframe , large_group_items):
     # np.zeros返回一个array
-    train_feature_sum_in_large_group = np.zeros(len(dataframe.shape[0]))
+    train_feature_sum_in_large_group = np.zeros(dataframe.shape[0])
     for i in range(len(large_group_items)):
         train_feature_sum_in_large_group += np.array(dataframe.loc[: , large_group_items[i]].tolist())
     train_feature_sum_in_large_group = train_feature_sum_in_large_group.tolist()
     train_feature_sum_in_large_group = train_feature_sum_in_large_group.apply(lambda x : 1 if x > 0 else 0)
-    return train_feature_sum_in_large_group
+    a = [(1 if member > 0 else 0) for member in train_feature_sum_in_large_group]
+    return a
 
 # read drg_class_csv
 # df_drg_class = pd.read_csv('/home/huxinhou/WorkSpace_BR/transfer_learning/transfer_learning/Doc/Drg_and_Class.csv')
@@ -35,7 +36,7 @@ large_group_dict = {
     "Systemic Infection" : ['Drg261', 'Drg262', 'Drg263', 'Drg264', 'Drg265', 'Drg266', 'Drg267'] ,
     "UNREL PDX" : ['Drg309', 'Drg310', 'Drg311']
 }
-large_group_list = large_group_dict.keys().tolist()
+large_group_list = list(large_group_dict.keys())
 print(large_group_list)
 
 # 生成不同的随机抽样比例
