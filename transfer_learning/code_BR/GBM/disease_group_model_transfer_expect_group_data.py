@@ -121,6 +121,6 @@ for data_num in range(1, 6):
 auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
 auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name)
 auc_global_dataframe['mean_result'] = auc_global_dataframe[["data_1" , "data_2" , "data_3" , "data_4" , "data_5"]].mean(axis=1)
-auc_global_dataframe.to_csv(csv_path , auc_by_global_model_csv_name)
+auc_global_dataframe.to_csv(csv_path + auc_by_global_model_csv_name)
 
 print("/n/nDone......../n/n")
