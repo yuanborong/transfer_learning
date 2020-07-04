@@ -35,7 +35,8 @@ large_group_dict = {
     "Systemic Infection" : ['Drg261', 'Drg262', 'Drg263', 'Drg264', 'Drg265', 'Drg266', 'Drg267'] ,
     "UNREL PDX" : ['Drg309', 'Drg310', 'Drg311']
 }
-large_group_list = large_group_dict.keys()
+large_group_list = large_group_dict.keys().tolist()
+print(large_group_list)
 
 # 生成不同的随机抽样比例
 sample_size = []
