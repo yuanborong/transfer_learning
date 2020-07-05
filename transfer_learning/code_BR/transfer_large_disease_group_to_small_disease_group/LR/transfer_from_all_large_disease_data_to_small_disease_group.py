@@ -87,7 +87,7 @@ for data_num in range(1, 6):
 
     for disease_num in range(len(disease_list)):
         # 根据当前的小亚组，寻找它对应的大亚组
-        large_group_name = small_group_dict.get(disease_list[disease_num])
+        large_group_name = small_group_dict.get(disease_list.iloc[disease_num , 0])
         # 按照某一个大亚组，large_group_items表示这个大亚组对对应的所有小亚组（drg_range）
         large_group_items = large_group_dict.get(large_group_name)
 
