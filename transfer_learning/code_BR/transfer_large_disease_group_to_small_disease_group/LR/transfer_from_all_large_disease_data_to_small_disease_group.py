@@ -68,11 +68,11 @@ for i in range(2, 21):
     sample_size.append(i * 0.05)
 
 # 创建一个5折交叉平均的df
-auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list,
+auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
                                   columns=sample_size)
 # 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
 auc_global_dataframe_columns = ['data_1' , 'data_2' , 'data_3' , 'data_4' , 'data_5' , 'mean_result']
-auc_global_dataframe = pd.DataFrame(index=disease_list, columns=auc_global_dataframe_columns)
+auc_global_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=auc_global_dataframe_columns)
 
 for data_num in range(1, 6):
     # set each data result csv's name
@@ -83,7 +83,7 @@ for data_num in range(1, 6):
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
 
     # 初始化一个新的auc_dataframe
-    auc_dataframe = pd.DataFrame(index=disease_list, columns=sample_size)
+    auc_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=sample_size)
 
     for disease_num in range(len(disease_list)):
         # 根据当前的小亚组，寻找它对应的大亚组
