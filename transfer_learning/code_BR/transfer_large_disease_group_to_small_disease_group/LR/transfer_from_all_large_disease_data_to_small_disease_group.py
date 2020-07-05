@@ -118,7 +118,7 @@ for data_num in range(1, 6):
         # use global model to predict each group disease's AUC
         y_predict_by_global_model = lr_source.predict_proba(X_test)[: , 1]
         auc_by_global_model = roc_auc_score(y_test , y_predict_by_global_model)
-        auc_global_dataframe.loc[disease_list[disease_num] , auc_global_dataframe_columns[data_num - 1]] = auc_by_global_model
+        auc_global_dataframe.loc[disease_list.iloc[disease_num , 0] , auc_global_dataframe_columns[data_num - 1]] = auc_by_global_model
 
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
