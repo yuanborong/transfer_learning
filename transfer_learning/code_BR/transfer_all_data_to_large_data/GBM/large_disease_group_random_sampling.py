@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import roc_auc_score
 import warnings
 import numpy as np
@@ -12,14 +12,9 @@ def get_true_sample(dataframe , large_group_items):
     for i in range(len(large_group_items)):
         train_feature_sum_in_large_group += np.array(dataframe.loc[: , large_group_items[i]].tolist())
     train_feature_sum_in_large_group = train_feature_sum_in_large_group.tolist()
+    #train_feature_sum_in_large_group = train_feature_sum_in_large_group.apply(lambda x : 1 if x > 0 else 0)
     a = [(True if member > 0 else False) for member in train_feature_sum_in_large_group]
     return a
-
-# csv_path
-csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/transfer_from_all_data_to_large_disease_group/LR/'
-# set data result csv's name
-mean_auc_csv_name = 'transfer_without_group_data_mean.csv'
-auc_by_global_model_csv_name = 'group_disease_data_by_global_model_without_group_data.csv'
 
 # get large disease group dict
 large_group_dict = {
@@ -35,6 +30,9 @@ large_group_dict = {
 }
 large_group_list = list(large_group_dict.keys())
 
+# csv_path
+csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/transfer_from_all_data_to_large_disease_group/GBM/'
+
 # 生成不同的随机抽样比例
 sample_size = []
 for i in range(2, 21):
@@ -43,18 +41,12 @@ for i in range(2, 21):
 # 创建一个5折交叉平均的df
 auc_mean_dataframe = pd.DataFrame(np.ones((len(large_group_list), len(sample_size))) * 0, index=large_group_list,
                                   columns=sample_size)
-# 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
-auc_global_dataframe_columns = ['data_1' , 'data_2' , 'data_3' , 'data_4' , 'data_5' , 'mean_result']
-auc_global_dataframe = pd.DataFrame(index=large_group_list, columns=auc_global_dataframe_columns)
 
 for data_num in range(1, 6):
-    # set each data result csv's name
-    csv_name = 'transfer_without_group_data_{}.csv'.format(data_num)
     # test data
     test_ori = pd.read_csv('/home/liukang/Doc/valid_df/test_{}.csv'.format(data_num))
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
-    # print('\nBegin data_' + str(data_num) + '.......\n\n')
 
     # 初始化一个新的auc_dataframe
     auc_dataframe = pd.DataFrame(index=large_group_list, columns=sample_size)
@@ -62,20 +54,6 @@ for data_num in range(1, 6):
     for disease_num in range(len(large_group_list)):
         # 按照某一个大亚组，large_group_items表示这个大亚组对对应的所有小亚组（drg_range）
         large_group_items = large_group_dict.get(large_group_list[disease_num])
-
-        # find patients without a certain disease
-        train_feature_true = get_true_sample(train_ori , large_group_items)
-        train_feature_false = [(True if flag == False else False) for flag in train_feature_true]
-        train_non_meaningful_sample = train_ori.loc[train_feature_false]
-        X_train_expect_this_group = train_non_meaningful_sample.drop(['Label'], axis=1)
-        y_train_expect_this_group = train_non_meaningful_sample['Label']
-
-        # learn global data without this group model
-        lr_All_expect_this_disease_group = LogisticRegression(n_jobs=-1)
-        lr_All_expect_this_disease_group.fit(X_train_expect_this_group , y_train_expect_this_group)
-
-        # knowledge used for transfer
-        Weight_importance_all_data_expect_group = lr_All_expect_this_disease_group.coef_[0]
 
         # find patients with a certain disease
         train_feature_true = get_true_sample(train_ori, large_group_items)
@@ -85,14 +63,6 @@ for data_num in range(1, 6):
         test_meaningful_sample = test_ori.loc[test_feature_true]
         X_test = test_meaningful_sample.drop(['Label'], axis=1)
         y_test = test_meaningful_sample['Label']
-        # transfer to X_test
-        fit_test = X_test * Weight_importance_all_data_expect_group
-
-        # use global model to predict each group disease's AUC
-        y_predict_by_global_model = lr_All_expect_this_disease_group.predict_proba(X_test)[:, 1]
-        auc_by_global_model = roc_auc_score(y_test, y_predict_by_global_model)
-        auc_global_dataframe.loc[
-        large_group_list[disease_num], auc_global_dataframe_columns[data_num - 1]] = auc_by_global_model
 
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
@@ -104,17 +74,14 @@ for data_num in range(1, 6):
                 X_train = random_sampling_train_meaningful_sample.drop(['Label'], axis=1)
                 y_train = random_sampling_train_meaningful_sample['Label']
 
-                # transfer to X_train
-                fit_train = X_train * Weight_importance_all_data_expect_group
-
-                # build LR model for random sampling
-                lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
+                # build GBM model for random sampling
+                GBM_DG_ran_smp = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,subsample=0.8,loss='deviance',max_features='sqrt',max_depth=3,min_samples_split=10,min_samples_leaf=3,min_weight_fraction_leaf=0,random_state=10)
                 try:
-                    lr_DG_ran_smp.fit(fit_train, y_train)
+                    GBM_DG_ran_smp.fit(X_train, y_train)
                 except Exception:
                     print('restart')
                     continue
-                y_predict = lr_DG_ran_smp.predict_proba(fit_test)[:, 1]
+                y_predict = GBM_DG_ran_smp.predict_proba(X_test)[: , 1]
                 auc = roc_auc_score(y_test, y_predict)
                 auc_list.append(auc)
                 i = i + 1
@@ -122,12 +89,14 @@ for data_num in range(1, 6):
             auc_dataframe.loc[large_group_list[disease_num], frac] = round(np.mean(auc_list), 3)
             auc_mean_dataframe.loc[large_group_list[disease_num], frac] += np.mean(auc_list)
 
-
+    csv_name = 'random_sampling_auc_result_data_{}.csv'.format(data_num)
     auc_dataframe.to_csv(csv_path + csv_name)
 
-auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
-auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name)
-auc_global_dataframe['mean_result'] = auc_global_dataframe[["data_1" , "data_2" , "data_3" , "data_4" , "data_5"]].mean(axis=1)
-auc_global_dataframe.to_csv(csv_path + auc_by_global_model_csv_name)
+    print('\nFinish data_' + str(data_num) + '.......\n\n')
 
-print("/n/nDone......../n/n")
+auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
+
+mean_auc_csv_name = 'random_sampling_mean_auc_result_data.csv'
+auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name)
+
+print("Done........")
