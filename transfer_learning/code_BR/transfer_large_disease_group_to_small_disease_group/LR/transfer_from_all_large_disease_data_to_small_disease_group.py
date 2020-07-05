@@ -68,7 +68,7 @@ for i in range(2, 21):
     sample_size.append(i * 0.05)
 
 # 创建一个5折交叉平均的df
-auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=large_group_list,
+auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list,
                                   columns=sample_size)
 # 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
 auc_global_dataframe_columns = ['data_1' , 'data_2' , 'data_3' , 'data_4' , 'data_5' , 'mean_result']
