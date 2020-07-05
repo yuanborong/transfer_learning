@@ -145,8 +145,8 @@ for data_num in range(1, 6):
                 auc_list.append(auc)
                 i = i + 1
 
-            auc_dataframe.loc[large_group_list[disease_num], frac] = round(np.mean(auc_list), 3)
-            auc_mean_dataframe.loc[large_group_list[disease_num], frac] += np.mean(auc_list)
+            auc_dataframe.loc[disease_list.iloc[disease_num , 0], frac] = round(np.mean(auc_list), 3)
+            auc_mean_dataframe.loc[disease_list.iloc[disease_num , 0], frac] += np.mean(auc_list)
 
     auc_dataframe.to_csv(csv_path + csv_name)
 
