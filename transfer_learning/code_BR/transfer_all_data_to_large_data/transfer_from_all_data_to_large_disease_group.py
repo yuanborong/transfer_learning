@@ -5,14 +5,15 @@ import warnings
 import numpy as np
 warnings.filterwarnings('ignore')
 
+# 传入数据集和要寻找的大亚组（多个疾病有一个满足即可）
 def get_true_sample(dataframe , large_group_items):
     # np.zeros返回一个array
     train_feature_sum_in_large_group = np.zeros(dataframe.shape[0])
     for i in range(len(large_group_items)):
         train_feature_sum_in_large_group += np.array(dataframe.loc[: , large_group_items[i]].tolist())
     train_feature_sum_in_large_group = train_feature_sum_in_large_group.tolist()
-    train_feature_sum_in_large_group = train_feature_sum_in_large_group.apply(lambda x : 1 if x > 0 else 0)
-    a = [(1 if member > 0 else 0) for member in train_feature_sum_in_large_group]
+    #train_feature_sum_in_large_group = train_feature_sum_in_large_group.apply(lambda x : 1 if x > 0 else 0)
+    a = [(True if member > 0 else False) for member in train_feature_sum_in_large_group]
     return a
 
 # read drg_class_csv
@@ -37,7 +38,6 @@ large_group_dict = {
     "UNREL PDX" : ['Drg309', 'Drg310', 'Drg311']
 }
 large_group_list = list(large_group_dict.keys())
-print(large_group_list)
 
 # 生成不同的随机抽样比例
 sample_size = []
@@ -77,7 +77,6 @@ for data_num in range(1, 6):
         # find patients with a certain disease
         large_group_items = large_group_dict.get(large_group_list[disease_num])
         train_feature_true = get_true_sample(train_ori , large_group_items)
-        # train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         train_meaningful_sample = train_ori.loc[train_feature_true]
 
         # test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
