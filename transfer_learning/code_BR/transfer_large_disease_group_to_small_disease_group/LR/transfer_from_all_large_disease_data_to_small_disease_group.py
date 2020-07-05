@@ -38,26 +38,26 @@ large_group_list = list(large_group_dict.keys())
 
 # connect small disease group to the large disease group
 small_group_dict = {
-    'Drg0' : 'Liver and Gall' ,
-    'Drg2' : 'Blood',
-    'Drg3' : 'Lung' ,
-    'Drg50' : 'Lung' ,
-    'Drg52' : 'Lung' ,
-    'Drg66' : 'Heart' ,
-    'Drg67' : 'Heart' ,
-    'Drg68' : 'Heart' ,
-    'Drg69' : 'Heart' ,
-    'Drg84' : 'Heart' ,
-    'Drg96' : 'Digestive Tract' ,
-    'Drg97' : 'Digestive Tract' ,
-    'Drg178' : 'Kidney' ,
-    'Drg179' : 'Kidney' ,
-    'Drg256' : 'Blood' ,
-    'Drg259' : 'Cancer' ,
-    'Drg261' : 'Systemic Infection' ,
-    'Drg262' : 'Systemic Infection' ,
-    'Drg263' : 'Systemic Infection' ,
-    'Drg309' : 'UNREL PDX'
+    "Drg0" : 'Liver and Gall' ,
+    "Drg2" : 'Blood',
+    "Drg3" : 'Lung' ,
+    "Drg50" : 'Lung' ,
+    "Drg52" : 'Lung' ,
+    "Drg66" : 'Heart' ,
+    "Drg67" : 'Heart' ,
+    "Drg68" : 'Heart' ,
+    "Drg69" : 'Heart' ,
+    "Drg84" : 'Heart' ,
+    "Drg96" : 'Digestive Tract' ,
+    "Drg97" : 'Digestive Tract' ,
+    "Drg178" : 'Kidney' ,
+    "Drg179" : 'Kidney' ,
+    "Drg256" : 'Blood' ,
+    "Drg259" : 'Cancer' ,
+    "Drg261" : 'Systemic Infection' ,
+    "Drg262" : 'Systemic Infection' ,
+    "Drg263" : 'Systemic Infection' ,
+    "Drg309" : 'UNREL PDX'
 }
 
 # ------------------------------------------------------------------------------------------------------
