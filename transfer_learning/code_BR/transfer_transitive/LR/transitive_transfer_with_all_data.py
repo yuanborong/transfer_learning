@@ -107,7 +107,7 @@ for data_num in range(1, 6):
         # find patients with a certain disease in middle domain
         middle_train_feature_true = get_true_sample(train_ori, large_group_items)
         middle_train_meaningful_sample = train_ori.loc[middle_train_feature_true]
-        middle_X_train = middle_train_feature_true.drop(['Label'], axis=1)
+        middle_X_train = middle_train_meaningful_sample.drop(['Label'], axis=1)
         middle_y_train = middle_train_meaningful_sample['Label']
         middle_fit_train = middle_X_train * Weight_importance_source_data
         lr_middle = LogisticRegression(n_jobs=-1)
