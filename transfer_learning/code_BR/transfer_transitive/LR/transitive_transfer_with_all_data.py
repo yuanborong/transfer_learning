@@ -124,6 +124,7 @@ for data_num in range(1, 6):
         X_test = target_test_meaningful_sample.drop(['Label'], axis=1)
         y_test = target_test_meaningful_sample['Label']
         # transfer to X_test
+        X_test = X_test * Weight_importance_source_data
         fit_test = X_test * Weight_importance_from_middle_data
 
         # use source model to predict each group disease's AUC
@@ -147,7 +148,8 @@ for data_num in range(1, 6):
                 y_train = random_sampling_train_meaningful_sample['Label']
 
                 # transfer to X_train
-                fit_train = X_train * Weight_importance_from_middle_data
+                fit_train = X_train * Weight_importance_source_data
+                fit_train = fit_train * Weight_importance_from_middle_data
 
                 # build LR model for random sampling
                 lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
