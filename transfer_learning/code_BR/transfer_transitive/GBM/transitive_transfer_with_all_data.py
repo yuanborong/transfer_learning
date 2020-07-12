@@ -127,6 +127,7 @@ for data_num in range(1, 6):
         middle_X_train = middle_train_meaningful_sample.drop(['Label'], axis=1)
         middle_y_train = middle_train_meaningful_sample['Label']
         gbm_large_group = GradientBoostingClassifier(init=gbm_source,n_estimators=middle_round, learning_rate=0.1,subsample=0.8,loss='deviance',max_features='sqrt',max_depth=3,min_samples_split=10,min_samples_leaf=3,min_weight_fraction_leaf=0,random_state=10)
+        gbm_large_group.fit(middle_X_train , middle_y_train)
         gbm_middle = gbm_init(gbm_large_group)
 
         # find patients with a certain disease in target domain
