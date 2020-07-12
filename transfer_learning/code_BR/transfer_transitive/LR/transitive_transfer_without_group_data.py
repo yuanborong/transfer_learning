@@ -19,9 +19,9 @@ disease_list = pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
 csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/transfer_transitive/LR/'
 # set data result csv's name
-mean_auc_csv_name = 'transfer_transitive_from_all_data_mean.csv'
-auc_by_source_model_csv_name = 'group_disease_data_by_source_model_with_all_data.csv'
-auc_by_middle_model_csv_name = 'group_disease_data_by_middle_model_with_all_data.csv'
+mean_auc_csv_name = 'transfer_transitive_expect_group_data_mean.csv'
+auc_by_source_model_csv_name = 'group_disease_data_by_source_model_expect_group_data.csv'
+auc_by_middle_model_csv_name = 'group_disease_data_by_middle_model_expect_group_data.csv'
 
 # get large disease group dict
 large_group_dict = {
@@ -78,21 +78,11 @@ auc_middle_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=auc_g
 
 for data_num in range(1, 6):
     # set each data result csv's name
-    csv_name = 'transfer_all_data_{}.csv'.format(data_num)
+    csv_name = 'transfer_without_group_data_{}.csv'.format(data_num)
     # test data
     test_ori = pd.read_csv('/home/liukang/Doc/valid_df/test_{}.csv'.format(data_num))
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
-
-    X_train_all_data = train_ori.drop(['Label'], axis=1)
-    y_train_all_data = train_ori['Label']
-
-    # learn global model
-    lr_source = LogisticRegression(n_jobs=-1)
-    lr_source.fit(X_train_all_data, y_train_all_data)
-
-    # knowledge used for transfer(from source data)
-    Weight_importance_source_data = lr_source.coef_[0]
 
     # 初始化一个新的auc_dataframe
     auc_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=sample_size)
@@ -103,10 +93,26 @@ for data_num in range(1, 6):
         # 按照某一个大亚组，large_group_items表示这个大亚组对对应的所有小亚组（drg_range）
         large_group_items = large_group_dict.get(large_group_name)
 
+        # 建立源域模型。
+        # find patients without a certain disease
+        source_train_feature_true = get_true_sample(train_ori, large_group_items)
+        source_train_feature_false = [(True if flag == False else False) for flag in source_train_feature_true]
+        source_train_non_meaningful_sample = train_ori.loc[source_train_feature_false]
+        source_X_train_expect_this_group = source_train_non_meaningful_sample.drop(['Label'], axis=1)
+        source_y_train_expect_this_group = source_train_non_meaningful_sample['Label']
+        # learn global model
+        lr_source = LogisticRegression(n_jobs=-1)
+        lr_source.fit(source_X_train_expect_this_group, source_y_train_expect_this_group)
+        # knowledge used for transfer(from source data)
+        Weight_importance_source_data = lr_source.coef_[0]
+
+        # 建立中间域模型
         # 依据对应属于的大亚组，先进行全体数据迁移到大亚组，得到迁移知识(第一次迁移)
         # find patients with a certain disease in middle domain
         middle_train_feature_true = get_true_sample(train_ori, large_group_items)
-        middle_train_meaningful_sample = train_ori.loc[middle_train_feature_true]
+        middle_train_meaningful_sample_large_disease_group = train_ori.loc[middle_train_feature_true]
+        middle_train_meaningful_true = (middle_train_meaningful_sample_large_disease_group.loc[:, disease_list.iloc[disease_num, 0]] == 0)
+        middle_train_meaningful_sample = middle_train_meaningful_sample_large_disease_group.loc[middle_train_meaningful_true]
         middle_X_train = middle_train_meaningful_sample.drop(['Label'], axis=1)
         middle_y_train = middle_train_meaningful_sample['Label']
         middle_fit_train = middle_X_train * Weight_importance_source_data
@@ -124,8 +130,8 @@ for data_num in range(1, 6):
         X_test = target_test_meaningful_sample.drop(['Label'], axis=1)
         y_test = target_test_meaningful_sample['Label']
         # transfer to X_test
-        X_test = X_test * Weight_importance_source_data
-        fit_test = X_test * Weight_importance_from_middle_data
+        fit_test = X_test * Weight_importance_source_data
+        fit_test = fit_test * Weight_importance_from_middle_data
 
         # use source model to predict each group disease's AUC
         y_predict_by_source_model = lr_source.predict_proba(X_test)[: , 1]
