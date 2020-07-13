@@ -147,7 +147,7 @@ for data_num in range(1, 6):
 
         # use middle model to predict each group disease's AUC
         y_predict_by_middle_model = gbm_large_group.predict_proba(X_test)[:, 1]
-        auc_by_middle_model = roc_auc_score(y_test, y_predict_by_source_model)
+        auc_by_middle_model = roc_auc_score(y_test, y_predict_by_middle_model)
         auc_middle_dataframe.loc[disease_list.iloc[disease_num, 0], auc_global_dataframe_columns[data_num - 1]] = auc_by_middle_model
 
         # 按不同的sample_size，df.sample进行随机抽样
