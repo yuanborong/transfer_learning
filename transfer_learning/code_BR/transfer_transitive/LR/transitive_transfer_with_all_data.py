@@ -121,19 +121,19 @@ for data_num in range(1, 6):
         # get patients with small disease in test dataset (target domain's test sample)
         target_test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         target_test_meaningful_sample = test_ori.loc[target_test_feature_true]
-        X_test = target_test_meaningful_sample.drop(['Label'], axis=1)
+        X_test_source = target_test_meaningful_sample.drop(['Label'], axis=1)
         y_test = target_test_meaningful_sample['Label']
         # transfer to X_test
-        X_test = X_test * Weight_importance_source_data
-        fit_test = X_test * Weight_importance_from_middle_data
+        X_test_middle = X_test_source * Weight_importance_source_data
+        X_test_target = X_test_middle * Weight_importance_from_middle_data
 
         # use source model to predict each group disease's AUC
-        y_predict_by_source_model = lr_source.predict_proba(X_test)[: , 1]
+        y_predict_by_source_model = lr_source.predict_proba(X_test_source)[: , 1]
         auc_by_source_model = roc_auc_score(y_test , y_predict_by_source_model)
         auc_source_dataframe.loc[disease_list.iloc[disease_num , 0] , auc_global_dataframe_columns[data_num - 1]] = auc_by_source_model
 
         # use middle model to predict each group disease's AUC
-        y_predict_by_middle_model = lr_middle.predict_proba(X_test)[:, 1]
+        y_predict_by_middle_model = lr_middle.predict_proba(X_test_middle)[:, 1]
         auc_by_middle_model = roc_auc_score(y_test, y_predict_by_middle_model)
         auc_middle_dataframe.loc[disease_list.iloc[disease_num, 0], auc_global_dataframe_columns[data_num - 1]] = auc_by_middle_model
 
@@ -158,7 +158,7 @@ for data_num in range(1, 6):
                 except Exception:
                     print('restart')
                     continue
-                y_predict = lr_DG_ran_smp.predict_proba(fit_test)[:, 1]
+                y_predict = lr_DG_ran_smp.predict_proba(X_test_target)[:, 1]
                 auc = roc_auc_score(y_test, y_predict)
                 auc_list.append(auc)
                 i = i + 1
