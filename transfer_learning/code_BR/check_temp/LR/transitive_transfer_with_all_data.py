@@ -133,7 +133,7 @@ for data_num in range(1, 6):
         Weight_importance_from_middle_data = lr_middle.coef_[0]
         if flag.get(large_group_name) == False :
             flag[large_group_name] = True
-            large_disease_group_coef_dataframe[large_group_name] = Weight_importance_from_middle_data
+            large_disease_group_coef_dataframe.loc[large_group_name , :] = Weight_importance_from_middle_data
             print(large_group_name)
 
         # find patients with a certain disease in target domain
