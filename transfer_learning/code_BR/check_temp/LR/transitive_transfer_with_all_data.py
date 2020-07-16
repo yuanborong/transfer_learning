@@ -26,7 +26,7 @@ auc_by_middle_model_csv_name = 'group_disease_data_by_middle_model_with_all_data
 # temporary
 # middle domain(large disease group) model's LR coef
 large_disease_group_coef_csv_name = 'large_disease_group_coef.csv'
-
+all_data_coef_csv_name = 'all_data_coef.csv'
 
 # get large disease group dict
 large_group_dict = {
@@ -67,6 +67,7 @@ small_group_dict = {
 }
 
 large_disease_group_coef_dataframe = pd.DataFrame(np.ones((len(large_group_list), 1921)) * 0, index=large_group_list)
+all_data_coef_dataframe = pd.DataFrame(np.ones((len(disease_list), 1921)) * 0, index=large_group_list)
 flag = {
     "Liver and Gall" :False,
     "Blood" : False,

@@ -17,7 +17,7 @@ def get_true_sample(dataframe , large_group_items):
 
 disease_list = pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
-csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/transfer_transitive/LR/'
+csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/transfer_transitive/LR_L1/'
 # set data result csv's name
 mean_auc_csv_name = 'transfer_transitive_from_all_data_mean.csv'
 auc_by_source_model_csv_name = 'group_disease_data_by_source_model_with_all_data.csv'
@@ -88,7 +88,7 @@ for data_num in range(1, 6):
     y_train_all_data = train_ori['Label']
 
     # learn global model
-    lr_source = LogisticRegression(n_jobs=-1)
+    lr_source = LogisticRegression(n_jobs=-1, penalty='l1')
     lr_source.fit(X_train_all_data, y_train_all_data)
 
     # knowledge used for transfer(from source data)
@@ -110,7 +110,7 @@ for data_num in range(1, 6):
         middle_X_train = middle_train_meaningful_sample.drop(['Label'], axis=1)
         middle_y_train = middle_train_meaningful_sample['Label']
         middle_fit_train = middle_X_train * Weight_importance_source_data
-        lr_middle = LogisticRegression(n_jobs=-1)
+        lr_middle = LogisticRegression(n_jobs=-1 , penalty='l1')
         lr_middle.fit(middle_fit_train , middle_y_train)
         Weight_importance_from_middle_data = lr_middle.coef_[0]
 
@@ -152,7 +152,7 @@ for data_num in range(1, 6):
                 fit_train = fit_train * Weight_importance_from_middle_data
 
                 # build LR model for random sampling
-                lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
+                lr_DG_ran_smp = LogisticRegression(n_jobs=-1 , penalty='l1')
                 try:
                     lr_DG_ran_smp.fit(fit_train, y_train)
                 except Exception:
