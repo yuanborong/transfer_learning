@@ -19,14 +19,12 @@ disease_list = pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
 csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/transfer_transitive/coef_LR/'
 # set data result csv's name
-mean_auc_csv_name = 'transfer_transitive_from_all_data_mean.csv'
-auc_by_source_model_csv_name = 'group_disease_data_by_source_model_with_all_data.csv'
-auc_by_middle_model_csv_name = 'group_disease_data_by_middle_model_with_all_data.csv'
+mean_auc_csv_name = 'transfer_from_all_data_to_small_disease_group_mean.csv'
+auc_by_global_model_csv_name = 'group_disease_data_by_global_model_with_all_data.csv'
 
 # temporary
 # middle domain(large disease group) model's LR coef
-large_disease_group_coef_csv_name = 'large_disease_group_coef.csv'
-
+large_disease_group_coef_csv_name = 'large_disease_group_coef(without_transitive_transfer).csv'
 
 # get large disease group dict
 large_group_dict = {
@@ -66,6 +64,20 @@ small_group_dict = {
     "Drg309" : 'UNREL PDX'
 }
 
+# ------------------------------------------------------------------------------------------------------
+
+# 生成不同的随机抽样比例
+sample_size = []
+for i in range(2, 21):
+    sample_size.append(i * 0.05)
+
+# 创建一个5折交叉平均的df
+auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
+                                  columns=sample_size)
+# 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
+auc_global_dataframe_columns = ['data_1' , 'data_2' , 'data_3' , 'data_4' , 'data_5' , 'mean_result']
+auc_global_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=auc_global_dataframe_columns)
+
 large_disease_group_coef_dataframe = pd.DataFrame(np.ones((len(large_group_list), 1921)) * 0, index=large_group_list)
 flag = {
     "Liver and Gall" :False,
@@ -79,21 +91,6 @@ flag = {
     "UNREL PDX" : False
 }
 
-# ------------------------------------------------------------------------------------------------------
-
-# 生成不同的随机抽样比例
-sample_size = []
-for i in range(2, 21):
-    sample_size.append(i * 0.05)
-
-# 创建一个5折交叉平均的df
-auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
-                                  columns=sample_size)
-# 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
-auc_global_dataframe_columns = ['data_1' , 'data_2' , 'data_3' , 'data_4' , 'data_5' , 'mean_result']
-auc_source_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=auc_global_dataframe_columns)
-auc_middle_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=auc_global_dataframe_columns)
-
 for data_num in range(1, 6):
     # set each data result csv's name
     csv_name = 'transfer_all_data_{}.csv'.format(data_num)
@@ -101,16 +98,6 @@ for data_num in range(1, 6):
     test_ori = pd.read_csv('/home/liukang/Doc/valid_df/test_{}.csv'.format(data_num))
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
-
-    X_train_all_data = train_ori.drop(['Label'], axis=1)
-    y_train_all_data = train_ori['Label']
-
-    # learn global model
-    lr_source = LogisticRegression(n_jobs=-1)
-    lr_source.fit(X_train_all_data, y_train_all_data)
-
-    # knowledge used for transfer(from source data)
-    Weight_importance_source_data = lr_source.coef_[0]
 
     # 初始化一个新的auc_dataframe
     auc_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=sample_size)
@@ -121,16 +108,17 @@ for data_num in range(1, 6):
         # 按照某一个大亚组，large_group_items表示这个大亚组对对应的所有小亚组（drg_range）
         large_group_items = large_group_dict.get(large_group_name)
 
-        # 依据对应属于的大亚组，先进行全体数据迁移到大亚组，得到迁移知识(第一次迁移)
-        # find patients with a certain disease in middle domain
-        middle_train_feature_true = get_true_sample(train_ori, large_group_items)
-        middle_train_meaningful_sample = train_ori.loc[middle_train_feature_true]
-        middle_X_train = middle_train_meaningful_sample.drop(['Label'], axis=1)
-        middle_y_train = middle_train_meaningful_sample['Label']
-        middle_fit_train = middle_X_train * Weight_importance_source_data
-        lr_middle = LogisticRegression(n_jobs=-1)
-        lr_middle.fit(middle_fit_train , middle_y_train)
-        Weight_importance_from_middle_data = lr_middle.coef_[0]
+        # find patients with a certain disease in source domain
+        source_train_feature_true = get_true_sample(train_ori , large_group_items)
+        source_train_meaningful_sample = train_ori.loc[source_train_feature_true]
+        X_train_source_data = source_train_meaningful_sample.drop(['Label'], axis=1)
+        y_train_source_data = source_train_meaningful_sample['Label']
+        # learn source model
+        lr_source = LogisticRegression(n_jobs=-1)
+        lr_source.fit(X_train_source_data, y_train_source_data)
+
+        # knowledge used for transfer
+        Weight_importance_from_source_data = lr_source.coef_[0]
         if flag.get(large_group_name) == False :
             flag[large_group_name] = True
             large_disease_group_coef_dataframe.loc[large_group_name , :] = Weight_importance_from_middle_data
@@ -141,23 +129,17 @@ for data_num in range(1, 6):
         target_train_meaningful_sample = train_ori.loc[target_train_feature_true]
 
         # get patients with small disease in test dataset (target domain's test sample)
-        target_test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
-        target_test_meaningful_sample = test_ori.loc[target_test_feature_true]
-        X_test_source = target_test_meaningful_sample.drop(['Label'], axis=1)
-        y_test = target_test_meaningful_sample['Label']
+        test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
+        test_meaningful_sample = test_ori.loc[test_feature_true]
+        X_test = test_meaningful_sample.drop(['Label'], axis=1)
+        y_test = test_meaningful_sample['Label']
         # transfer to X_test
-        X_test_middle = X_test_source * Weight_importance_source_data
-        X_test_target = X_test_middle * Weight_importance_from_middle_data
+        fit_test = X_test * Weight_importance_from_source_data
 
-        # use source model to predict each group disease's AUC
-        y_predict_by_source_model = lr_source.predict_proba(X_test_source)[: , 1]
-        auc_by_source_model = roc_auc_score(y_test , y_predict_by_source_model)
-        auc_source_dataframe.loc[disease_list.iloc[disease_num , 0] , auc_global_dataframe_columns[data_num - 1]] = auc_by_source_model
-
-        # use middle model to predict each group disease's AUC
-        y_predict_by_middle_model = lr_middle.predict_proba(X_test_middle)[:, 1]
-        auc_by_middle_model = roc_auc_score(y_test, y_predict_by_middle_model)
-        auc_middle_dataframe.loc[disease_list.iloc[disease_num, 0], auc_global_dataframe_columns[data_num - 1]] = auc_by_middle_model
+        # use global model to predict each group disease's AUC
+        y_predict_by_global_model = lr_source.predict_proba(X_test)[: , 1]
+        auc_by_global_model = roc_auc_score(y_test , y_predict_by_global_model)
+        auc_global_dataframe.loc[disease_list.iloc[disease_num , 0] , auc_global_dataframe_columns[data_num - 1]] = auc_by_global_model
 
         # 按不同的sample_size，df.sample进行随机抽样
         for frac in sample_size:
@@ -170,8 +152,7 @@ for data_num in range(1, 6):
                 y_train = random_sampling_train_meaningful_sample['Label']
 
                 # transfer to X_train
-                fit_train = X_train * Weight_importance_source_data
-                fit_train = fit_train * Weight_importance_from_middle_data
+                fit_train = X_train * Weight_importance_from_source_data
 
                 # build LR model for random sampling
                 lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
@@ -180,7 +161,7 @@ for data_num in range(1, 6):
                 except Exception:
                     print('restart')
                     continue
-                y_predict = lr_DG_ran_smp.predict_proba(X_test_target)[:, 1]
+                y_predict = lr_DG_ran_smp.predict_proba(fit_test)[:, 1]
                 auc = roc_auc_score(y_test, y_predict)
                 auc_list.append(auc)
                 i = i + 1
@@ -194,9 +175,7 @@ for data_num in range(1, 6):
 
 # auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
 # auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name)
-# auc_source_dataframe['mean_result'] = auc_source_dataframe[["data_1" , "data_2" , "data_3" , "data_4" , "data_5"]].mean(axis=1)
-# auc_source_dataframe.to_csv(csv_path + auc_by_source_model_csv_name)
-# auc_middle_dataframe['mean_result'] = auc_middle_dataframe[["data_1" , "data_2" , "data_3" , "data_4" , "data_5"]].mean(axis=1)
-# auc_middle_dataframe.to_csv(csv_path + auc_by_middle_model_csv_name)
+# auc_global_dataframe['mean_result'] = auc_global_dataframe[["data_1" , "data_2" , "data_3" , "data_4" , "data_5"]].mean(axis=1)
+# auc_global_dataframe.to_csv(csv_path + auc_by_global_model_csv_name)
 large_disease_group_coef_dataframe.to_csv(csv_path + large_disease_group_coef_csv_name)
 print("Done........")
