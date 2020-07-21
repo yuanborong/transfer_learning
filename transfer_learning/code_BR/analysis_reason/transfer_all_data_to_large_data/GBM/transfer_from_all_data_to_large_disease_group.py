@@ -36,8 +36,10 @@ def get_true_sample(dataframe , large_group_items):
 # csv_path
 csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/analysis_reason/transfer_from_all_data_to_large_disease_group/GBM/'
 # set data result csv's name
-mean_auc_csv_name = 'transfer_from_all_data_to_large_disease_group_mean.csv'
-auc_by_global_model_csv_name = 'group_disease_data_by_global_model_with_all_data.csv'
+mean_auc_csv_name_10 = 'transfer_from_all_data_to_large_disease_group_mean_10%.csv'
+auc_by_global_model_csv_name_10 = 'group_disease_data_by_global_model_with_all_data_10%.csv'
+mean_auc_csv_name_20 = 'transfer_from_all_data_to_large_disease_group_mean_20%.csv'
+auc_by_global_model_csv_name_20 = 'group_disease_data_by_global_model_with_all_data_20%.csv'
 
 # get large disease group dict
 large_group_dict = {
@@ -57,14 +59,18 @@ large_group_list = list(large_group_dict.keys())
 sample_size = [0.1 , 0.2]
 # for i in range(2, 21):
 #     sample_size.append(i * 0.05)
+source_n_estimators = []
+for i in range(1 , 10):
+    source_n_estimators.append(i * 10)
 
-# 创建一个5折交叉平均的df
-auc_mean_dataframe = pd.DataFrame(np.ones((len(large_group_list), len(sample_size))) * 0, index=large_group_list,
-                                  columns=sample_size)
-# 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
-auc_global_dataframe_columns = [0.1 , 0.2]
-auc_global_dataframe = pd.DataFrame(np.ones((len(large_group_list), len(sample_size))) * 0,
-                                    index=large_group_list, columns=auc_global_dataframe_columns)
+auc_mean_dataframe_10 = pd.DataFrame(np.ones((len(large_group_list), len(source_n_estimators))) * 0, index=large_group_list,
+                                  columns=source_n_estimators)
+auc_global_dataframe_10 = pd.DataFrame(np.ones((len(large_group_list), len(source_n_estimators))) * 0,
+                                    index=large_group_list, columns=source_n_estimators)
+auc_mean_dataframe_20 = pd.DataFrame(np.ones((len(large_group_list), len(source_n_estimators))) * 0, index=large_group_list,
+                                  columns=source_n_estimators)
+auc_global_dataframe_20 = pd.DataFrame(np.ones((len(large_group_list), len(source_n_estimators))) * 0,
+                                    index=large_group_list, columns=source_n_estimators)
 
 for data_num in range(1, 6):
     # set each data result csv's name
@@ -95,63 +101,79 @@ for data_num in range(1, 6):
 
         # 对大亚组进行随机抽样10%或20%
         for frac in sample_size:
-            auc_list = []
-            i = 0
-            while i < 10:
-                large_group_disease_meaningful_sample = large_group_disease_all_sample.sample(frac = frac , axis = 0)
-                # 取随机抽样的大亚组样本下标，这些样本是保留的，其余的在大亚组样本是去掉
-                large_group_disease_meaningful_sample_index = large_group_disease_meaningful_sample.index.tolist()
-                # 得到不使用的大亚组样本下标
-                train_meaningful_false = []
-                for idx_all in large_group_disease_all_sample_index:
-                    if idx_all not in large_group_disease_meaningful_sample_index:
-                        train_meaningful_false.append(idx_all)
-                # 得到一个布尔向量，长度是训练集的样本量，标记保留哪些训练样本
-                train_meaningful_true = []
-                for i in range(train_ori.shape[0]):
-                    if i not in train_meaningful_false:
-                        train_meaningful_true.append(True)
+            for source_estis in source_n_estimators:
+                target_estis = 100 - source_estis
+
+                auc_list = []
+                i = 0
+                while i < 10:
+                    large_group_disease_meaningful_sample = large_group_disease_all_sample.sample(frac = frac , axis = 0)
+                    # 取随机抽样的大亚组样本下标，这些样本是保留的，其余的在大亚组样本是去掉
+                    large_group_disease_meaningful_sample_index = large_group_disease_meaningful_sample.index.tolist()
+
+                    # 得到不使用的大亚组样本下标
+                    train_meaningful_false = []
+                    for idx_all in large_group_disease_all_sample_index:
+                        if idx_all not in large_group_disease_meaningful_sample_index:
+                            train_meaningful_false.append(idx_all)
+
+                    # 得到一个布尔向量，长度是训练集的样本量，标记保留哪些训练样本
+                    train_meaningful_true = []
+                    for i in range(train_ori.shape[0]):
+                        if i not in train_meaningful_false:
+                            train_meaningful_true.append(True)
+                        else:
+                            train_meaningful_true.append(False)
+
+                    train_meaningful_sample = train_ori.loc[train_meaningful_true]
+                    source_X_train = train_meaningful_sample.drop(['Label'], axis=1)
+                    source_y_train = train_meaningful_sample['Label']
+                    gbm_All = GradientBoostingClassifier(n_estimators=source_estis, learning_rate=0.1, subsample=0.8, loss='deviance',
+                                                         max_features='sqrt', max_depth=3, min_samples_split=10, min_samples_leaf=3,
+                                                         min_weight_fraction_leaf=0, random_state=10)
+                    gbm_All.fit(source_X_train, source_y_train)
+                    # knowledge used for transfer
+                    gbm_ori = gbm_init(gbm_All)
+
+                    # use global model to predict each group disease's AUC
+                    y_predict_by_global_model = gbm_All.predict_proba(X_test)[:, 1]
+                    auc_by_global_model = roc_auc_score(y_test, y_predict_by_global_model)
+                    if frac == 0.1:
+                        auc_global_dataframe_10.loc[large_group_list[disease_num], source_estis] += auc_by_global_model
                     else:
-                        train_meaningful_true.append(False)
-                train_meaningful_sample = train_ori.loc[train_meaningful_true]
-                source_X_train = train_meaningful_sample.drop(['Label'], axis=1)
-                source_y_train = train_meaningful_sample['Label']
-                gbm_All = GradientBoostingClassifier(n_estimators=ori_round, learning_rate=0.1, subsample=0.8, loss='deviance',
-                                                     max_features='sqrt', max_depth=3, min_samples_split=10, min_samples_leaf=3,
-                                                     min_weight_fraction_leaf=0, random_state=10)
-                gbm_All.fit(source_X_train, source_y_train)
-                # knowledge used for transfer
-                gbm_ori = gbm_init(gbm_All)
+                        auc_global_dataframe_20.loc[large_group_list[disease_num], source_estis] += auc_by_global_model
 
-                # use global model to predict each group disease's AUC
-                y_predict_by_global_model = gbm_All.predict_proba(X_test)[:, 1]
-                auc_by_global_model = roc_auc_score(y_test, y_predict_by_global_model)
-                auc_global_dataframe.loc[large_group_list[disease_num] , frac] += auc_by_global_model
+                    # 去目标域（大亚组）样本，这得到的是10%或20%的目标域样本
+                    target_X_train = large_group_disease_meaningful_sample.drop(['Label'], axis=1)
+                    target_y_train = large_group_disease_meaningful_sample['Label']
+                    gbm_DG_ran_smp = GradientBoostingClassifier(init=gbm_ori, n_estimators=target_estis, learning_rate=0.1,
+                                                                subsample=0.8, loss='deviance', max_features='sqrt',
+                                                                max_depth=3, min_samples_split=10, min_samples_leaf=3,
+                                                                min_weight_fraction_leaf=0, random_state=10)
+                    try:
+                        gbm_DG_ran_smp.fit(target_X_train, target_y_train)
+                    except Exception:
+                        print('restart')
+                        continue
+                    y_predict = gbm_DG_ran_smp.predict_proba(X_test)[:, 1]
+                    auc = roc_auc_score(y_test, y_predict)
+                    auc_list.append(auc)
+                    i = i + 1
 
-                # 去目标域（大亚组）样本，这得到的是10%或20%的目标域样本
-                target_X_train = large_group_disease_meaningful_sample.drop(['Label'], axis=1)
-                target_y_train = large_group_disease_meaningful_sample['Label']
-                gbm_DG_ran_smp = GradientBoostingClassifier(init=gbm_ori, n_estimators=target_round, learning_rate=0.1,
-                                                            subsample=0.8, loss='deviance', max_features='sqrt',
-                                                            max_depth=3, min_samples_split=10, min_samples_leaf=3,
-                                                            min_weight_fraction_leaf=0, random_state=10)
-                try:
-                    gbm_DG_ran_smp.fit(target_X_train, target_y_train)
-                except Exception:
-                    print('restart')
-                    continue
-                y_predict = gbm_DG_ran_smp.predict_proba(X_test)[:, 1]
-                auc = roc_auc_score(y_test, y_predict)
-                auc_list.append(auc)
-                i = i + 1
-
-            auc_mean_dataframe.loc[large_group_list[disease_num], frac] += np.mean(auc_list)
+            if frac == 0.1:
+                auc_mean_dataframe_10.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
+            else:
+                auc_mean_dataframe_20.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
 
         print('\nFinish data_' + str(data_num) + '.......\n\n')
 
-auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
-auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name)
-auc_global_dataframe = auc_global_dataframe.apply(lambda x: round(x / 5, 3))
-auc_global_dataframe.to_csv(csv_path + auc_by_global_model_csv_name)
+auc_mean_dataframe_10 = auc_mean_dataframe_10.apply(lambda x: round(x / 5, 3))
+auc_mean_dataframe_10.to_csv(csv_path + mean_auc_csv_name_10)
+auc_global_dataframe_10 = auc_global_dataframe_10.apply(lambda x: round(x / 5, 3))
+auc_global_dataframe_10.to_csv(csv_path + auc_by_global_model_csv_name_10)
+auc_mean_dataframe_20 = auc_mean_dataframe_20.apply(lambda x: round(x / 5, 3))
+auc_mean_dataframe_20.to_csv(csv_path + mean_auc_csv_name_20)
+auc_global_dataframe_20 = auc_global_dataframe_20.apply(lambda x: round(x / 5, 3))
+auc_global_dataframe_20.to_csv(csv_path + auc_by_global_model_csv_name_20)
 
 print("Done........")
