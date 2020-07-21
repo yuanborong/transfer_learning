@@ -17,11 +17,11 @@ class gbm_init:
         # disable .fit() in GBM
         self.a=1+1
 
-# number of trees based on source domain <= ori_round
-ori_round=100
-
-#number of trees based on target domain <= target_round
-target_round=20
+# # number of trees based on source domain <= ori_round
+# ori_round=100
+#
+# #number of trees based on target domain <= target_round
+# target_round=20
 
 # 传入数据集和要寻找的大亚组（多个疾病有一个满足即可）
 def get_true_sample(dataframe , large_group_items):
@@ -40,6 +40,8 @@ mean_auc_csv_name_10 = 'transfer_from_all_data_to_large_disease_group_mean_10%.c
 auc_by_global_model_csv_name_10 = 'group_disease_data_by_global_model_with_all_data_10%.csv'
 mean_auc_csv_name_20 = 'transfer_from_all_data_to_large_disease_group_mean_20%.csv'
 auc_by_global_model_csv_name_20 = 'group_disease_data_by_global_model_with_all_data_20%.csv'
+mean_auc_csv_name_100 = 'transfer_from_all_data_to_large_disease_group_mean_100%.csv'
+auc_by_global_model_csv_name_100 = 'group_disease_data_by_global_model_with_all_data_100%.csv'
 
 # get large disease group dict
 large_group_dict = {
@@ -56,7 +58,7 @@ large_group_dict = {
 large_group_list = list(large_group_dict.keys())
 
 # 生成不同的随机抽样比例
-sample_size = [0.1 , 0.2]
+sample_size = [0.1 , 0.2 , 1]
 # for i in range(2, 21):
 #     sample_size.append(i * 0.05)
 source_n_estimators = []
@@ -70,6 +72,10 @@ auc_global_dataframe_10 = pd.DataFrame(np.ones((len(large_group_list), len(sourc
 auc_mean_dataframe_20 = pd.DataFrame(np.ones((len(large_group_list), len(source_n_estimators))) * 0, index=large_group_list,
                                   columns=source_n_estimators)
 auc_global_dataframe_20 = pd.DataFrame(np.ones((len(large_group_list), len(source_n_estimators))) * 0,
+                                    index=large_group_list, columns=source_n_estimators)
+auc_mean_dataframe_100 = pd.DataFrame(np.ones((len(large_group_list), len(source_n_estimators))) * 0, index=large_group_list,
+                                  columns=source_n_estimators)
+auc_global_dataframe_100 = pd.DataFrame(np.ones((len(large_group_list), len(source_n_estimators))) * 0,
                                     index=large_group_list, columns=source_n_estimators)
 
 for data_num in range(1, 6):
@@ -140,8 +146,10 @@ for data_num in range(1, 6):
                     auc_by_global_model = roc_auc_score(y_test, y_predict_by_global_model)
                     if frac == 0.1:
                         auc_global_dataframe_10.loc[large_group_list[disease_num], source_estis] += auc_by_global_model
-                    else:
+                    elif frac == 0.2:
                         auc_global_dataframe_20.loc[large_group_list[disease_num], source_estis] += auc_by_global_model
+                    else:
+                        auc_global_dataframe_100.loc[large_group_list[disease_num], source_estis] += auc_by_global_model
 
                     # 去目标域（大亚组）样本，这得到的是10%或20%的目标域样本
                     target_X_train = large_group_disease_meaningful_sample.drop(['Label'], axis=1)
@@ -162,8 +170,10 @@ for data_num in range(1, 6):
 
             if frac == 0.1:
                 auc_mean_dataframe_10.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
-            else:
+            elif frac == 0.2:
                 auc_mean_dataframe_20.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
+            else:
+                auc_mean_dataframe_100.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
 
         print('\nFinish data_' + str(data_num) + '.......\n\n')
 
@@ -175,5 +185,9 @@ auc_mean_dataframe_20 = auc_mean_dataframe_20.apply(lambda x: round(x / 5, 3))
 auc_mean_dataframe_20.to_csv(csv_path + mean_auc_csv_name_20)
 auc_global_dataframe_20 = auc_global_dataframe_20.apply(lambda x: round(x / 5, 3))
 auc_global_dataframe_20.to_csv(csv_path + auc_by_global_model_csv_name_20)
+auc_mean_dataframe_100 = auc_mean_dataframe_100.apply(lambda x: round(x / 5, 3))
+auc_mean_dataframe_100.to_csv(csv_path + mean_auc_csv_name_100)
+auc_global_dataframe_100 = auc_global_dataframe_100.apply(lambda x: round(x / 5, 3))
+auc_global_dataframe_100.to_csv(csv_path + auc_by_global_model_csv_name_100)
 
 print("Done........")
