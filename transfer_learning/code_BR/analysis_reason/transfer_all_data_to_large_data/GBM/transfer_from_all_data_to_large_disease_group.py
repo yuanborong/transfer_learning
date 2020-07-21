@@ -168,14 +168,14 @@ for data_num in range(1, 6):
                     auc_list.append(auc)
                     i = i + 1
 
-            if frac == 0.1:
-                auc_mean_dataframe_10.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
-            elif frac == 0.2:
-                auc_mean_dataframe_20.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
-            else:
-                auc_mean_dataframe_100.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
+                if frac == 0.1:
+                    auc_mean_dataframe_10.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
+                elif frac == 0.2:
+                    auc_mean_dataframe_20.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
+                else:
+                    auc_mean_dataframe_100.loc[large_group_list[disease_num], source_estis] += np.mean(auc_list)
 
-        print('\nFinish data_' + str(data_num) + '.......\n\n')
+    print('\nFinish data_' + str(data_num) + '.......\n\n')
 
 auc_mean_dataframe_10 = auc_mean_dataframe_10.apply(lambda x: round(x / 5, 3))
 auc_mean_dataframe_10.to_csv(csv_path + mean_auc_csv_name_10)
