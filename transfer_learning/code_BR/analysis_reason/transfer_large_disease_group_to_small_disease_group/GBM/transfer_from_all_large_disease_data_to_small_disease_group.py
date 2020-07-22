@@ -35,7 +35,7 @@ def get_true_sample(dataframe , large_group_items):
 
 disease_list = pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
-csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/analysis_reason/transfer_from_large_disease_group_to_small_disease_group/GBM/'
+csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/analysis_reason/transfer_large_disease_group_to_small_disease_group/GBM/'
 # set data result csv's name
 mean_auc_csv_name_10 = 'transfer_from_all_data_to_large_disease_group_mean_10%.csv'
 auc_by_global_model_csv_name_10 = 'group_disease_data_by_global_model_with_all_data_10%.csv'
