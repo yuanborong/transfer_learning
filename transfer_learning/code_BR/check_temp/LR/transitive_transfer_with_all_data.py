@@ -17,16 +17,11 @@ def get_true_sample(dataframe , large_group_items):
 
 disease_list = pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
-csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/transfer_transitive/coef_LR/'
+csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/analysis_reason/LR_coef/transfer_transitive/'
 # set data result csv's name
 mean_auc_csv_name = 'transfer_transitive_from_all_data_mean.csv'
 auc_by_source_model_csv_name = 'group_disease_data_by_source_model_with_all_data.csv'
 auc_by_middle_model_csv_name = 'group_disease_data_by_middle_model_with_all_data.csv'
-
-# temporary
-# middle domain(large disease group) model's LR coef
-large_disease_group_coef_csv_name = 'large_disease_group_coef.csv'
-all_data_coef_csv_name = 'all_data_coef.csv'
 
 # get large disease group dict
 large_group_dict = {
@@ -66,20 +61,6 @@ small_group_dict = {
     "Drg309" : 'UNREL PDX'
 }
 
-large_disease_group_coef_dataframe = pd.DataFrame(np.ones((len(large_group_list), 1921)) * 0, index=large_group_list)
-all_data_coef_dataframe = pd.DataFrame(np.ones((len(disease_list), 1921)) * 0, index=large_group_list)
-flag = {
-    "Liver and Gall" :False,
-    "Blood" : False,
-    "Lung" : False,
-    "Heart" : False,
-    "Digestive Tract" : False,
-    "Kidney" : False,
-    "Cancer" : False,
-    "Systemic Infection" : False,
-    "UNREL PDX" : False
-}
-
 # ------------------------------------------------------------------------------------------------------
 
 # 生成不同的随机抽样比例
@@ -98,10 +79,23 @@ auc_middle_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=auc_g
 for data_num in range(1, 6):
     # set each data result csv's name
     csv_name = 'transfer_all_data_{}.csv'.format(data_num)
+    # temporary
+    # source domain(large disease group) model's LR coef
+    source_coef_csv_name = 'source_coef_{}.csv'.format(data_num)
+    middle_coef_csv_name = 'middle_coef_{}.csv'.format(data_num)
+    # target_coef_csv_name = 'target_coef_{}.csv'.format(data_num)
     # test data
     test_ori = pd.read_csv('/home/liukang/Doc/valid_df/test_{}.csv'.format(data_num))
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
+
+    # 初始化一个新的auc_dataframe
+    source_coef_dataframe = pd.DataFrame(np.ones((1, 1921)) * 0, index=['all_data_model_coef'])
+    middle_coef_dataframe = pd.DataFrame(np.ones((len(large_group_list), 1921)) * 0,
+                                         index=large_group_list)
+    # target_coef_dataframe = pd.DataFrame(np.ones((len(disease_list), 1921)) * 0,
+    #                                      index=disease_list)
+    auc_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=sample_size)
 
     X_train_all_data = train_ori.drop(['Label'], axis=1)
     y_train_all_data = train_ori['Label']
@@ -112,9 +106,7 @@ for data_num in range(1, 6):
 
     # knowledge used for transfer(from source data)
     Weight_importance_source_data = lr_source.coef_[0]
-
-    # 初始化一个新的auc_dataframe
-    auc_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=sample_size)
+    source_coef_dataframe.loc['all_data_model_coef' , :] = Weight_importance_source_data
 
     for disease_num in range(len(disease_list)):
         # 根据当前的小亚组，寻找它对应的大亚组
@@ -131,11 +123,8 @@ for data_num in range(1, 6):
         middle_fit_train = middle_X_train * Weight_importance_source_data
         lr_middle = LogisticRegression(n_jobs=-1)
         lr_middle.fit(middle_fit_train , middle_y_train)
-        Weight_importance_from_middle_data = lr_middle.coef_[0]
-        if flag.get(large_group_name) == False :
-            flag[large_group_name] = True
-            large_disease_group_coef_dataframe.loc[large_group_name , :] = Weight_importance_from_middle_data
-            print(large_group_name)
+        Weight_importance_middle_data = lr_middle.coef_[0]
+        middle_coef_dataframe.loc[large_group_name , :] = Weight_importance_middle_data
 
         # find patients with a certain disease in target domain
         target_train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
@@ -148,7 +137,7 @@ for data_num in range(1, 6):
         y_test = target_test_meaningful_sample['Label']
         # transfer to X_test
         X_test_middle = X_test_source * Weight_importance_source_data
-        X_test_target = X_test_middle * Weight_importance_from_middle_data
+        X_test_target = X_test_middle * Weight_importance_middle_data
 
         # use source model to predict each group disease's AUC
         y_predict_by_source_model = lr_source.predict_proba(X_test_source)[: , 1]
@@ -172,7 +161,7 @@ for data_num in range(1, 6):
 
                 # transfer to X_train
                 fit_train = X_train * Weight_importance_source_data
-                fit_train = fit_train * Weight_importance_from_middle_data
+                fit_train = fit_train * Weight_importance_middle_data
 
                 # build LR model for random sampling
                 lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
@@ -189,15 +178,9 @@ for data_num in range(1, 6):
             auc_dataframe.loc[disease_list.iloc[disease_num , 0], frac] = round(np.mean(auc_list), 3)
             auc_mean_dataframe.loc[disease_list.iloc[disease_num , 0], frac] += np.mean(auc_list)
 
-    # auc_dataframe.to_csv(csv_path + csv_name)
+    source_coef_dataframe.to_csv(csv_path + source_coef_csv_name)
+    middle_coef_dataframe.to_csv(csv_path + middle_coef_csv_name)
 
     print('\nFinish data_' + str(data_num) + '.......\n\n')
 
-# auc_mean_dataframe = auc_mean_dataframe.apply(lambda x: round(x / 5, 3))
-# auc_mean_dataframe.to_csv(csv_path + mean_auc_csv_name)
-# auc_source_dataframe['mean_result'] = auc_source_dataframe[["data_1" , "data_2" , "data_3" , "data_4" , "data_5"]].mean(axis=1)
-# auc_source_dataframe.to_csv(csv_path + auc_by_source_model_csv_name)
-# auc_middle_dataframe['mean_result'] = auc_middle_dataframe[["data_1" , "data_2" , "data_3" , "data_4" , "data_5"]].mean(axis=1)
-# auc_middle_dataframe.to_csv(csv_path + auc_by_middle_model_csv_name)
-large_disease_group_coef_dataframe.to_csv(csv_path + large_disease_group_coef_csv_name)
 print("Done........")
