@@ -115,7 +115,7 @@ for i in range(1 , 10):
     target_n_estimators.append(i * 10)
 
 # 创建一个5折交叉平均的df
-auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
+auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(target_n_estimators))) * 0, index=disease_list.iloc[:, 0],
                                   columns=target_n_estimators)
 # 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
 auc_global_dataframe_columns = ['data_1' , 'data_2' , 'data_3' , 'data_4' , 'data_5' , 'mean_result']
