@@ -25,26 +25,26 @@ class gbm_init:
 
 
 param_n_estimators_dict = {
-    'Drg0' : [90 , 10 , 50] ,
-    'Drg2' : [80 , 20 , 70] ,
-    'Drg3' : [90 , 10 , 90] ,
-    'Drg50': [40, 60 , 90],
-    'Drg52': [60, 20 , 30],
-    'Drg66': [10, 90 , 50],
-    'Drg67': [30, 70 , 40],
-    'Drg68': [20, 80 , 70],
-    'Drg69': [10, 90 , 40],
-    'Drg84': [30, 70 , 40],
-    'Drg96': [60, 20 , 90],
-    'Drg97': [60, 20 , 60],
-    'Drg178': [30, 70 , 20],
-    'Drg179': [10, 90 , 20],
-    'Drg256': [70, 30 , 10],
-    'Drg259': [40, 60 , 60],
-    'Drg261': [30, 70 , 30],
-    'Drg262': [60, 40 , 30],
-    'Drg263': [10, 90 , 10],
-    'Drg309': [80, 20 , 10],
+    'Drg0' : [90 , 10] ,
+    'Drg2' : [80 , 20] ,
+    'Drg3' : [90 , 10] ,
+    'Drg50': [40, 60],
+    'Drg52': [60, 20],
+    'Drg66': [10, 90],
+    'Drg67': [30, 70],
+    'Drg68': [20, 80],
+    'Drg69': [10, 90],
+    'Drg84': [30, 70],
+    'Drg96': [60, 20],
+    'Drg97': [60, 20],
+    'Drg178': [30, 70],
+    'Drg179': [10, 90],
+    'Drg256': [70, 30],
+    'Drg259': [40, 60],
+    'Drg261': [30, 70],
+    'Drg262': [60, 40],
+    'Drg263': [10, 90],
+    'Drg309': [80, 20],
 }
 
 # 传入数据集和要寻找的大亚组（多个疾病有一个满足即可）
@@ -106,13 +106,17 @@ small_group_dict = {
 # ------------------------------------------------------------------------------------------------------
 
 # 生成不同的随机抽样比例
-sample_size = []
-for i in range(2, 21):
-    sample_size.append(i * 0.05)
+sample_size = [0.1 , 0.2 , 1.0]
+# for i in range(2, 21):
+#     sample_size.append(i * 0.05)
+
+target_n_estimators = []
+for i in range(1 , 10):
+    target_n_estimators.append(i * 10)
 
 # 创建一个5折交叉平均的df
 auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
-                                  columns=sample_size)
+                                  columns=target_n_estimators)
 # 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
 auc_global_dataframe_columns = ['data_1' , 'data_2' , 'data_3' , 'data_4' , 'data_5' , 'mean_result']
 auc_source_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=auc_global_dataframe_columns)
@@ -136,13 +140,13 @@ for data_num in range(1, 6):
     # gbm_source = gbm_init(gbm_All)
 
     # 初始化一个新的auc_dataframe
-    auc_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=sample_size)
+    auc_dataframe = pd.DataFrame(index=disease_list.iloc[:, 0], columns=target_n_estimators)
 
     for disease_num in range(len(disease_list)):
         param_n_estimators_list = param_n_estimators_dict.get(disease_list.iloc[disease_num , 0])
         source_round = param_n_estimators_list[0]
         middle_round = param_n_estimators_list[1]
-        target_round = param_n_estimators_list[2]
+        # target_round = param_n_estimators_list[2]
 
         gbm_All = GradientBoostingClassifier(n_estimators=source_round, learning_rate=0.1, subsample=0.8,
                                              loss='deviance',
@@ -187,12 +191,13 @@ for data_num in range(1, 6):
         auc_middle_dataframe.loc[disease_list.iloc[disease_num, 0], auc_global_dataframe_columns[data_num - 1]] = auc_by_middle_model
 
         # 按不同的sample_size，df.sample进行随机抽样
-        for frac in sample_size:
+        for target_round in target_n_estimators:
             auc_list = []
             i = 0
             while i < 10:
                 # random sampling for test auc
-                random_sampling_train_meaningful_sample = target_train_meaningful_sample.sample(frac=frac, axis=0)
+                # random_sampling_train_meaningful_sample = target_train_meaningful_sample.sample(frac=frac, axis=0)
+                random_sampling_train_meaningful_sample = target_train_meaningful_sample
                 target_X_train = random_sampling_train_meaningful_sample.drop(['Label'], axis=1)
                 target_y_train = random_sampling_train_meaningful_sample['Label']
 
@@ -216,8 +221,8 @@ for data_num in range(1, 6):
                 auc_list.append(auc)
                 i = i + 1
 
-            auc_dataframe.loc[disease_list.iloc[disease_num , 0], frac] = round(np.mean(auc_list), 3)
-            auc_mean_dataframe.loc[disease_list.iloc[disease_num , 0], frac] += np.mean(auc_list)
+            auc_dataframe.loc[disease_list.iloc[disease_num , 0], target_round] = round(np.mean(auc_list), 3)
+            auc_mean_dataframe.loc[disease_list.iloc[disease_num , 0], target_n_estimators] += np.mean(auc_list)
 
     auc_dataframe.to_csv(csv_path + csv_name)
 
