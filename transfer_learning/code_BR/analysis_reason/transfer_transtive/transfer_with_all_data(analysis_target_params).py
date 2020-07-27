@@ -222,7 +222,7 @@ for data_num in range(1, 6):
                 i = i + 1
 
             auc_dataframe.loc[disease_list.iloc[disease_num , 0], target_round] = round(np.mean(auc_list), 3)
-            auc_mean_dataframe.loc[disease_list.iloc[disease_num , 0], target_n_estimators] += np.mean(auc_list)
+            auc_mean_dataframe.loc[disease_list.iloc[disease_num , 0], target_round] += np.mean(auc_list)
 
     auc_dataframe.to_csv(csv_path + csv_name)
 
