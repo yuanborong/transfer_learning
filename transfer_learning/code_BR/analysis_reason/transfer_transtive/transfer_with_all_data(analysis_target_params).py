@@ -59,7 +59,7 @@ def get_true_sample(dataframe , large_group_items):
 
 disease_list = pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 # csv_path
-csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/analysis_reason/transfer_transitive/GBM/modify_source_middle_target/'
+csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/analysis_reason/transfer_transitive/GBM/analysis_target_params/'
 # set data result csv's name
 mean_auc_csv_name = 'transfer_transitive_from_all_data_mean.csv'
 auc_by_source_model_csv_name = 'group_disease_data_by_source_model_with_all_data.csv'
