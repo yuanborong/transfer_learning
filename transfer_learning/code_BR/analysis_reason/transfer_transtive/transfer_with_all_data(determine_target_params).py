@@ -138,7 +138,7 @@ for data_num in range(1, 6):
             # find patients with a certain disease in target domain
             target_train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
             target_train_meaningful_sample = train_ori.loc[target_train_feature_true]
-            small_group_disease_all_sample_index = target_train_meaningful_sample.index.tolist
+            small_group_disease_all_sample_index = target_train_meaningful_sample.index.tolist()
 
             # get patients with small disease in test dataset (target domain's test sample)
             target_test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
