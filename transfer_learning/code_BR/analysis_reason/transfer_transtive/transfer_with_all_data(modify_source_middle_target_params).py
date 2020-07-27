@@ -35,8 +35,8 @@ param_n_estimators_dict = {
     'Drg68': [20, 80 , 70],
     'Drg69': [10, 90 , 30],
     'Drg84': [30, 70 , 90],
-    'Drg96': [60, 20 , 70],
-    'Drg97': [60, 20 , 60],
+    'Drg96': [80, 20 , 70],
+    'Drg97': [50, 50 , 60],
     'Drg178': [30, 70 , 40],
     'Drg179': [10, 90 , 20],
     'Drg256': [70, 30 , 80],
@@ -106,9 +106,7 @@ small_group_dict = {
 # ------------------------------------------------------------------------------------------------------
 
 # 生成不同的随机抽样比例
-sample_size = []
-for i in range(2, 21):
-    sample_size.append(i * 0.05)
+sample_size = [0.1 , 0.2 , 1]
 
 # 创建一个5折交叉平均的df
 auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
@@ -192,7 +190,10 @@ for data_num in range(1, 6):
             i = 0
             while i < 10:
                 # random sampling for test auc
-                random_sampling_train_meaningful_sample = target_train_meaningful_sample.sample(frac=frac, axis=0)
+                if frac != 1:
+                    random_sampling_train_meaningful_sample = target_train_meaningful_sample.sample(frac=frac, axis=0)
+                else:
+                    random_sampling_train_meaningful_sample = target_train_meaningful_sample
                 target_X_train = random_sampling_train_meaningful_sample.drop(['Label'], axis=1)
                 target_y_train = random_sampling_train_meaningful_sample['Label']
 
