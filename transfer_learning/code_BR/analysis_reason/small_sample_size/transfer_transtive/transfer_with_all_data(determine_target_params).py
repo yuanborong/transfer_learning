@@ -124,11 +124,13 @@ for data_num in range(1, 6):
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
 
-    X_train_all_data = train_ori.drop(['Label'], axis=1)
-    y_train_all_data = train_ori['Label']
-
     # 按不同的sample_size，df.sample进行随机抽样
     for disease_num in range(len(disease_list)):
+        param_n_estimators_list = param_n_estimators_dict.get(disease_list.iloc[disease_num, 0])
+        source_round = param_n_estimators_list[0]
+        middle_round = param_n_estimators_list[1]
+        target_round = param_n_estimators_list[2]
+
         # 根据当前的小亚组，寻找它对应的大亚组
         large_group_name = small_group_dict.get(disease_list.iloc[disease_num, 0])
         # 按照某一个大亚组，large_group_items表示这个大亚组对对应的所有小亚组（drg_range）
@@ -138,80 +140,100 @@ for data_num in range(1, 6):
         large_group_disease_all_sample = train_ori.loc[large_group_disease_all_feature_true]
         large_group_disease_all_sample_index = large_group_disease_all_sample.index.tolist()
 
+        # 在训练集中找到小亚组的所有样本
+        target_train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
+        target_train_meaningful_sample = train_ori.loc[target_train_feature_true]
+        small_group_disease_all_sample_index = target_train_meaningful_sample.index.tolist()
 
+        # 在测试集中找到小亚组的所有样本
+        target_test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
+        target_test_meaningful_sample = test_ori.loc[target_test_feature_true]
+        X_test = target_test_meaningful_sample.drop(['Label'], axis=1)
+        y_test = target_test_meaningful_sample['Label']
+
+        # 先在源域中把所有的大亚组全部剔除
+        source_expect_middle_sample_boolean_true = []
+        for i in range(train_ori.shape[0]):
+            if i in large_group_disease_all_sample_index:
+                source_expect_middle_sample_boolean_true.append(False)
+            else:
+                source_expect_middle_sample_boolean_true.append(True)
+        source_expect_middle_sample = train_ori.loc[source_expect_middle_sample_boolean_true]
+        source_expect_middle_sample_index = source_expect_middle_sample.index.tolist()
 
         for frac in sample_size:
-            param_n_estimators_list = param_n_estimators_dict.get(disease_list.iloc[disease_num, 0])
-            source_round = param_n_estimators_list[0]
-            middle_round = param_n_estimators_list[1]
-            target_round = param_n_estimators_list[2]
-
-            # find patients with a certain disease in target domain
-            target_train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
-            target_train_meaningful_sample = train_ori.loc[target_train_feature_true]
-            small_group_disease_all_sample_index = target_train_meaningful_sample.index.tolist()
-
-            # get patients with small disease in test dataset (target domain's test sample)
-            target_test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
-            target_test_meaningful_sample = test_ori.loc[target_test_feature_true]
-            X_test = target_test_meaningful_sample.drop(['Label'], axis=1)
-            y_test = target_test_meaningful_sample['Label']
-
-
-
             auc_by_source_model_list = []
             auc_by_middle_model_list = []
             auc_by_target_model_list = []
             i = 0
             while i < 10:
-                # random sampling for test auc
-                if frac != 1:
-                    samll_group_disease_meaningful_sample = target_train_meaningful_sample.sample(frac=frac, axis=0)
-                else:
-                    samll_group_disease_meaningful_sample = target_train_meaningful_sample
-                target_X_train = samll_group_disease_meaningful_sample.drop(['Label'], axis=1)
-                target_y_train = samll_group_disease_meaningful_sample['Label']
+                # 对小亚组随机抽样
+                small_group_disease_meaningful_sample = target_train_meaningful_sample.sample(frac=frac, axis=0)
+                target_domain_index = small_group_disease_meaningful_sample.index.tolist()
 
-                # 用已有的小亚组样本（随机抽样后），在全部数据和大亚组上进行剔除
-                small_group_disease_meaningful_sample_index = samll_group_disease_meaningful_sample.index.tolist()
-                # 得到不使用的小亚组样本下标
-                train_meaningful_false = []
-                for idx_all in small_group_disease_all_sample_index:
-                    if idx_all not in small_group_disease_meaningful_sample_index:
-                        train_meaningful_false.append(idx_all)
-
-                # 第一步：首先先取得当前样本量下小亚组样本的下标，这些样本是保留的，其余的在小亚组样本是去掉
-                # 得到一个布尔向量，长度是训练集的样本量，标记保留哪些训练样本
-                source_train_meaningful_true = []
+                # 首先处理中间域数据
+                # 在大亚组里面首先剔除掉小亚组
+                middle_expect_small_group_sample_boolean_true = (large_group_disease_all_sample.loc[:, disease_list.iloc[disease_num, 0]] == 0)
+                middle_expect_small_group_sample = large_group_disease_all_sample.loc[middle_expect_small_group_sample_boolean_true]
+                # 对剔除小亚组后的大亚组随机抽样
+                middle_expect_small_group_sample_small_size = middle_expect_small_group_sample.sample(frac = frac , axis = 0)
+                middle_expect_small_group_sample_small_size_index = middle_expect_small_group_sample_small_size.index.tolist()
+                # 在随机抽样后的大亚组，加入上随机抽样的小亚组
+                middle_domain_index = list(set(target_domain_index + middle_expect_small_group_sample_small_size_index))
+                # 依据中间域下标Index，得到布尔列表
+                middle_meaningful_sample_boolean_true = []
                 for i in range(train_ori.shape[0]):
-                    if i in train_meaningful_false:
-                        source_train_meaningful_true.append(False)
+                    if i in middle_domain_index:
+                        middle_meaningful_sample_boolean_true.append(True)
                     else:
-                        source_train_meaningful_true.append(True)
-                # 依靠布尔向量，得到源域的所有样本
-                source_train_meaningful_sample = train_ori.loc[source_train_meaningful_true]
-                source_X_train = source_train_meaningful_sample.drop(['Label'], axis=1)
-                source_y_train = source_train_meaningful_sample['Label']
+                        middle_meaningful_sample_boolean_true.append(False)
+                # 得到中间域数据样本
+                middle_meaningful_sample = train_ori.loc[middle_meaningful_sample_boolean_true]
+                middle_X_train = middle_meaningful_sample.drop(['Label'] , axis = 1)
+                middle_y_train = middle_meaningful_sample['Label']
 
-                # 第二步：在大亚组上剔除掉不要的小亚组样本（中间域）
-                # 得到用于训练的大亚组样本（去除某一部分小亚组样本）的下标
-                middle_train_meaningful_true_index = []
-                for idx_large_group in large_group_disease_all_sample_index:
-                    if idx_large_group not in train_meaningful_false:
-                        middle_train_meaningful_true_index.append(idx_large_group)
-                # 得到一个布尔向量，长度是训练集的样本量，标记保留哪些训练样本
-                middle_train_meaningful_true = []
+                # 再处理源域数据
+                # 首先在源域中剔除掉大亚组数据（前面已经得到了：source_expect_middle_sample、source_expect_middle_sample_index）
+                # 然后加上中间域数据就行了（中间域是由大亚组是10%和小亚组10%组成）
+                source_domain_index = list(set(source_expect_middle_sample_index + middle_domain_index))
+                # 依据源域下标Index，得到布尔列表
+                source_meaningful_sample_boolean_true = []
                 for i in range(train_ori.shape[0]):
-                    if i in middle_train_meaningful_true_index:
-                        middle_train_meaningful_true.append(True)
+                    if i in source_domain_index:
+                        source_meaningful_sample_boolean_true.append(True)
                     else:
-                        middle_train_meaningful_true.append(False)
-                # 依靠布尔向量，得到中间域的所有样本
-                middle_train_meaningful_sample = train_ori.loc[middle_train_meaningful_true]
-                middle_X_train = middle_train_meaningful_sample.drop(['Label'] , axis = 1)
-                middle_y_train = middle_train_meaningful_sample['Label']
+                        source_meaningful_sample_boolean_true.append(False)
+                # 得到源域数据样本
+                source_meaningful_sample = train_ori.loc[source_meaningful_sample_boolean_true]
+                source_X_train = middle_meaningful_sample.drop(['Label'] , axis = 1)
+                source_y_train = middle_meaningful_sample['Label']
 
-                # 第三步：得到最终的源域、中间域、目标域的所有符合的样本，三次建模
+                # 得到目标域数据
+                target_X_train = small_group_disease_meaningful_sample.drop(['Label'], axis=1)
+                target_y_train = small_group_disease_meaningful_sample['Label']
+
+                # 首先先处理得到源域数据
+                # 第一步：把随机抽样的大亚组和小亚组加入到源域数据中
+                # 把随机抽样的大亚组和小亚组合并
+                # large_and_small_meaningful_sample_index = list(set(target_domain_index + middle_domain_index))
+                # # 第二步：把随机抽样的大亚组和小亚组以及剔除了大亚组（当然也剔除了小亚组）的源域合并
+                # source_meaningful_sample_index = list(set(large_and_small_meaningful_sample_index + source_train_sample_expect_middle_sample_index))
+                # source_meaningful_sample_boolean_true = []
+                # for i in range(train_ori.shape[0]):
+                #     if i in source_meaningful_sample_index:
+                #         source_meaningful_sample_boolean_true.append(True)
+                #     else:
+                #         source_meaningful_sample_boolean_true.append(False)
+                # source_meaningful_sample = train_ori.loc[source_meaningful_sample_boolean_true]
+                # # 得到源域数据
+                # source_X_train = source_meaningful_sample.drop(['Label'] , axis = 1)
+                # source_y_train = source_meaningful_sample['Label']
+                #
+                # # 处理中间域数据
+
+
+
+                # 得到最终的源域、中间域、目标域的所有符合的样本后，三次建模
                 # 构建源域模型
                 gbm_All = GradientBoostingClassifier(n_estimators=source_round, learning_rate=0.1, subsample=0.8,
                                                      loss='deviance',

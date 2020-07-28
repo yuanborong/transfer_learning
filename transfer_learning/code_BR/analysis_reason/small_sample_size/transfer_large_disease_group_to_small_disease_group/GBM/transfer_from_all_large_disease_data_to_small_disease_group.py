@@ -126,7 +126,7 @@ for data_num in range(1, 6):
             auc_target_list = []
             i = 0
             while i < 10:
-                # 再在派出了小亚组的大亚组上，随机抽样
+                # 再在排除了小亚组的大亚组上，随机抽样
                 source_train_small_simple_size = source_train_meaningful_sample.sample(frac = frac , axis = 0)
                 source_large_group_meaningful_index = source_train_small_simple_size.index.tolist()
                 # 在小亚组上随机抽样
