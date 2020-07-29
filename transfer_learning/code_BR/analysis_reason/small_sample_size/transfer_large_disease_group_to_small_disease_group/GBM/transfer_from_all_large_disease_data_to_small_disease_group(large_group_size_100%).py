@@ -38,7 +38,7 @@ disease_list = pd.read_csv('/home/liukang/Doc/disease_top_20.csv')
 csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/analysis_reason/small_sample_size/transfer_from_large_disease_group_to_small_disease_group(large_group_size_100%)/GBM/'
 # set data result csv's name
 auc_source_csv_name = 'group_disease_data_by_source_model_with_all_data.csv'
-auc_target_csv_name = 'transfer_transitive_from_all_data_mean.csv'
+auc_target_csv_name = 'transfer_from_all_data_to_large_disease_group_mean.csv'
 
 # get large disease group dict
 large_group_dict = {
