@@ -113,16 +113,16 @@ for data_num in range(1, 6):
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
 
-    # get patients with small disease in test dataset (target domain's test sample)
-    test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
-    test_meaningful_sample = test_ori.loc[test_feature_true]
-    X_test = test_meaningful_sample.drop(['Label'], axis=1)
-    y_test = test_meaningful_sample['Label']
-
     for disease_num in range(len(disease_list)):
         param_n_estimators_list = param_n_estimators_dict.get(disease_list.iloc[disease_num, 0])
         source_round = param_n_estimators_list[0]
         target_round = param_n_estimators_list[1]
+
+        # get patients with small disease in test dataset (target domain's test sample)
+        test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
+        test_meaningful_sample = test_ori.loc[test_feature_true]
+        X_test = test_meaningful_sample.drop(['Label'], axis=1)
+        y_test = test_meaningful_sample['Label']
 
         # 根据当前的小亚组，寻找它对应的大亚组
         large_group_name = small_group_dict.get(disease_list.iloc[disease_num , 0])
@@ -152,7 +152,7 @@ for data_num in range(1, 6):
                 # 在小亚组上随机抽样
                 target_train_small_simple_size = target_train_meaningful_sample.sample(frac=frac, axis=0)
                 source_small_group_meaningful_index = target_train_small_simple_size.index.tolist()
-                # 合并10%的大亚组和10%的小亚组(去重)
+                # 合并20%的大亚组和10%的小亚组(去重)
                 source_train_meaningful_index = list(set(source_large_group_meaningful_index + source_small_group_meaningful_index))
                 # 得到源域的布尔列表
                 source_domain_index = []

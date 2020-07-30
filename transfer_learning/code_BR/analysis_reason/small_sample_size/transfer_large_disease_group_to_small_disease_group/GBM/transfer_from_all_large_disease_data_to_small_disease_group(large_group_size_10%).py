@@ -97,13 +97,13 @@ for data_num in range(1, 6):
     # training data
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
 
-    # get patients with small disease in test dataset (target domain's test sample)
-    test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
-    test_meaningful_sample = test_ori.loc[test_feature_true]
-    X_test = test_meaningful_sample.drop(['Label'], axis=1)
-    y_test = test_meaningful_sample['Label']
-
     for disease_num in range(len(disease_list)):
+        # get patients with small disease in test dataset (target domain's test sample)
+        test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
+        test_meaningful_sample = test_ori.loc[test_feature_true]
+        X_test = test_meaningful_sample.drop(['Label'], axis=1)
+        y_test = test_meaningful_sample['Label']
+
         # 根据当前的小亚组，寻找它对应的大亚组
         large_group_name = small_group_dict.get(disease_list.iloc[disease_num , 0])
         # 按照某一个大亚组，large_group_items表示这个大亚组对对应的所有小亚组（drg_range）
