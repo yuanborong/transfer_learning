@@ -17,11 +17,6 @@ class gbm_init:
         # disable .fit() in GBM
         self.a=1+1
 
-# # number of trees based on source domain <= ori_round
-# ori_round=100
-#
-# #number of trees based on target domain <= target_round
-# target_round=20
 
 # 传入数据集和要寻找的大亚组（多个疾病有一个满足即可）
 def get_true_sample(dataframe , large_group_items):
