@@ -17,11 +17,28 @@ class gbm_init:
         # disable .fit() in GBM
         self.a=1+1
 
-# number of trees based on source domain <= ori_round
-ori_round=100
-
-#number of trees based on target domain <= target_round
-target_round=20
+param_n_estimators_dict = {
+    'Drg0' : [90 , 10],
+    'Drg2' : [80 , 20],
+    'Drg3' : [90 , 10],
+    'Drg50': [40 , 60],
+    'Drg52': [80 , 20],
+    'Drg66': [10 , 90],
+    'Drg67': [30 , 70],
+    'Drg68': [20 , 80],
+    'Drg69': [10 , 90],
+    'Drg84': [30 , 70],
+    'Drg96': [80 , 20],
+    'Drg97': [50 , 50],
+    'Drg178': [30 , 70],
+    'Drg179': [10 , 90],
+    'Drg256': [70 , 30],
+    'Drg259': [40 , 60],
+    'Drg261': [30 , 70],
+    'Drg262': [60 , 40],
+    'Drg263': [10 , 90],
+    'Drg309': [80 , 20]
+}
 
 # 传入数据集和要寻找的大亚组（多个疾病有一个满足即可）
 def get_true_sample(dataframe , large_group_items):
@@ -98,6 +115,10 @@ for data_num in range(1, 6):
     train_ori = pd.read_csv('/home/liukang/Doc/valid_df/train_{}.csv'.format(data_num))
 
     for disease_num in range(len(disease_list)):
+        param_n_estimators_list = param_n_estimators_dict.get(disease_list.iloc[disease_num, 0])
+        source_round = param_n_estimators_list[0]
+        target_round = param_n_estimators_list[1]
+
         # get patients with small disease in test dataset (target domain's test sample)
         test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         test_meaningful_sample = test_ori.loc[test_feature_true]
@@ -147,7 +168,7 @@ for data_num in range(1, 6):
                 source_y_train = source_train_sample['Label']
                 # 构建源域模型
                 # learn global model
-                gbm_All = GradientBoostingClassifier(n_estimators=ori_round, learning_rate=0.1, subsample=0.8,
+                gbm_All = GradientBoostingClassifier(n_estimators=source_round, learning_rate=0.1, subsample=0.8,
                                                      loss='deviance',
                                                      max_features='sqrt', max_depth=3, min_samples_split=10,
                                                      min_samples_leaf=3,
