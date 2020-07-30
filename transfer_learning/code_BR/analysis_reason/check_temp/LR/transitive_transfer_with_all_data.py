@@ -124,7 +124,7 @@ for data_num in range(1, 6):
         lr_middle = LogisticRegression(n_jobs=-1)
         lr_middle.fit(middle_fit_train , middle_y_train)
         Weight_importance_middle_data = lr_middle.coef_[0]
-        middle_coef_dataframe.loc[large_group_name , :] = Weight_importance_middle_data
+        middle_coef_dataframe.loc[large_group_name , :] = Weight_importance_middle_data * Weight_importance_source_data
 
         # find patients with a certain disease in target domain
         target_train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
