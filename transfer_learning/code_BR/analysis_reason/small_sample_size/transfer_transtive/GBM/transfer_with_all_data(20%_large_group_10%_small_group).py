@@ -106,15 +106,16 @@ small_group_dict = {
 # ------------------------------------------------------------------------------------------------------
 
 # 生成不同的随机抽样比例
-sample_size = [0.1]
+sample_size = [0.1 , 0.2 , 0.3 , 0.4 , 0.5]
+columns_name = ['0.1-0.1' , '0.2-0.1' , '0.3-0.1' , '0.4-0.1' , '0.5-0.1']
 
 # 创建一个5折交叉平均的df
-auc_source_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
-                                  columns=sample_size)
-auc_middle_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
-                                  columns=sample_size)
-auc_target_dataframe = pd.DataFrame(np.ones((len(disease_list), len(sample_size))) * 0, index=disease_list.iloc[:, 0],
-                                  columns=sample_size)
+auc_source_dataframe = pd.DataFrame(np.ones((len(disease_list), len(columns_name))) * 0, index=disease_list.iloc[:, 0],
+                                  columns=columns_name)
+auc_middle_dataframe = pd.DataFrame(np.ones((len(disease_list), len(columns_name))) * 0, index=disease_list.iloc[:, 0],
+                                  columns=columns_name)
+auc_target_dataframe = pd.DataFrame(np.ones((len(disease_list), len(columns_name))) * 0, index=disease_list.iloc[:, 0],
+                                  columns=columns_name)
 
 for data_num in range(1, 6):
     # set each data result csv's name
@@ -161,14 +162,14 @@ for data_num in range(1, 6):
         source_expect_middle_sample = train_ori.loc[source_expect_middle_sample_boolean_true]
         source_expect_middle_sample_index = source_expect_middle_sample.index.tolist()
 
-        for frac in sample_size:
+        for frac_index in range(len(sample_size)):
             auc_by_source_model_list = []
             auc_by_middle_model_list = []
             auc_by_target_model_list = []
             i = 0
             while i < 10:
                 # 对小亚组随机抽样
-                small_group_disease_meaningful_sample = target_train_meaningful_sample.sample(frac=frac, axis=0)
+                small_group_disease_meaningful_sample = target_train_meaningful_sample.sample(frac=0.1, axis=0)
                 target_domain_index = small_group_disease_meaningful_sample.index.tolist()
 
                 # 首先处理中间域数据
@@ -176,7 +177,7 @@ for data_num in range(1, 6):
                 middle_expect_small_group_sample_boolean_true = (large_group_disease_all_sample.loc[:, disease_list.iloc[disease_num, 0]] == 0)
                 middle_expect_small_group_sample = large_group_disease_all_sample.loc[middle_expect_small_group_sample_boolean_true]
                 # 对剔除小亚组后的大亚组随机抽样
-                middle_expect_small_group_sample_small_size = middle_expect_small_group_sample.sample(frac = 0.2 , axis = 0)
+                middle_expect_small_group_sample_small_size = middle_expect_small_group_sample.sample(frac = sample_size[frac_index] , axis = 0)
                 middle_expect_small_group_sample_small_size_index = middle_expect_small_group_sample_small_size.index.tolist()
                 # 在随机抽样后的大亚组，加入上随机抽样的小亚组
                 middle_domain_index = list(set(target_domain_index + middle_expect_small_group_sample_small_size_index))
@@ -253,9 +254,9 @@ for data_num in range(1, 6):
                 auc_by_target_model_list.append(auc_by_target_model)
                 i = i + 1
 
-            auc_source_dataframe.loc[disease_list.iloc[disease_num, 0], frac] += np.mean(auc_by_source_model_list)
-            auc_middle_dataframe.loc[disease_list.iloc[disease_num, 0], frac] += np.mean(auc_by_middle_model_list)
-            auc_target_dataframe.loc[disease_list.iloc[disease_num, 0], frac] += np.mean(auc_by_target_model_list)
+            auc_source_dataframe.loc[disease_list.iloc[disease_num, 0], columns_name[frac_index]] += np.mean(auc_by_source_model_list)
+            auc_middle_dataframe.loc[disease_list.iloc[disease_num, 0], columns_name[frac_index]] += np.mean(auc_by_middle_model_list)
+            auc_target_dataframe.loc[disease_list.iloc[disease_num, 0], columns_name[frac_index]] += np.mean(auc_by_target_model_list)
 
     print('\nFinish data_' + str(data_num) + '.......\n\n')
 
