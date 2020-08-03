@@ -67,7 +67,7 @@ small_group_dict = {
 # sample_size = []
 # for i in range(2, 21):
 #     sample_size.append(i * 0.05)
-C_list = [0.01 , 0.1 , 0.2 , 0.5 , 1 , 1.2 , 1.5 , 2]
+C_list = [1 , 1.2 , 1.5 , 2 ,  5 , 10 , 15 , 20]
 
 # 创建一个5折交叉平均的df
 auc_mean_dataframe = pd.DataFrame(np.ones((len(disease_list), len(C_list))) * 0, index=disease_list.iloc[:, 0],
