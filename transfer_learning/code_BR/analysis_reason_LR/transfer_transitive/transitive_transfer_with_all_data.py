@@ -119,27 +119,27 @@ for data_num in range(1, 6):
         target_train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
         target_train_meaningful_sample = train_ori.loc[target_train_feature_true]
 
-        # get patients with small disease in test dataset (target domain's test sample)
-        target_test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
-        target_test_meaningful_sample = test_ori.loc[target_test_feature_true]
-        X_test_source = target_test_meaningful_sample.drop(['Label'], axis=1)
-        y_test = target_test_meaningful_sample['Label']
-        # transfer to X_test
-        X_test_middle = X_test_source * Weight_importance_source_data
-        X_test_target = X_test_middle * Weight_importance_from_middle_data
-
-        # use source model to predict each group disease's AUC
-        y_predict_by_source_model = lr_source.predict_proba(X_test_source)[: , 1]
-        auc_by_source_model = roc_auc_score(y_test , y_predict_by_source_model)
-        auc_source_dataframe.loc[disease_list.iloc[disease_num , 0] , auc_global_dataframe_columns[data_num - 1]] = auc_by_source_model
-
-        # use middle model to predict each group disease's AUC
-        y_predict_by_middle_model = lr_middle.predict_proba(X_test_middle)[:, 1]
-        auc_by_middle_model = roc_auc_score(y_test, y_predict_by_middle_model)
-        auc_middle_dataframe.loc[disease_list.iloc[disease_num, 0], auc_global_dataframe_columns[data_num - 1]] = auc_by_middle_model
-
         # 按不同的sample_size，df.sample进行随机抽样
         for weight in multiple_weight_size:
+            # get patients with small disease in test dataset (target domain's test sample)
+            target_test_feature_true = test_ori.loc[:, disease_list.iloc[disease_num, 0]] > 0
+            target_test_meaningful_sample = test_ori.loc[target_test_feature_true]
+            X_test_source = target_test_meaningful_sample.drop(['Label'], axis=1)
+            y_test = target_test_meaningful_sample['Label']
+            # transfer to X_test
+            X_test_middle = X_test_source * Weight_importance_source_data
+            X_test_target = X_test_middle * Weight_importance_from_middle_data * weight
+
+            # use source model to predict each group disease's AUC
+            y_predict_by_source_model = lr_source.predict_proba(X_test_source)[: , 1]
+            auc_by_source_model = roc_auc_score(y_test , y_predict_by_source_model)
+            auc_source_dataframe.loc[disease_list.iloc[disease_num , 0] , auc_global_dataframe_columns[data_num - 1]] = auc_by_source_model
+
+            # use middle model to predict each group disease's AUC
+            y_predict_by_middle_model = lr_middle.predict_proba(X_test_middle)[:, 1]
+            auc_by_middle_model = roc_auc_score(y_test, y_predict_by_middle_model)
+            auc_middle_dataframe.loc[disease_list.iloc[disease_num, 0], auc_global_dataframe_columns[data_num - 1]] = auc_by_middle_model
+
             auc_list = []
             i = 0
             while i < 10:
@@ -150,7 +150,7 @@ for data_num in range(1, 6):
 
                 # transfer to X_train
                 fit_train = X_train * Weight_importance_source_data
-                fit_train = fit_train * Weight_importance_from_middle_data
+                fit_train = fit_train * Weight_importance_from_middle_data * weight
 
                 # build LR model for random sampling
                 lr_DG_ran_smp = LogisticRegression(n_jobs=-1)
@@ -167,7 +167,7 @@ for data_num in range(1, 6):
             auc_dataframe.loc[disease_list.iloc[disease_num , 0], weight] = round(np.mean(auc_list), 3)
             auc_mean_dataframe.loc[disease_list.iloc[disease_num , 0], weight] += np.mean(auc_list)
 
-    auc_dataframe.to_csv(csv_path + csv_name)
+    # auc_dataframe.to_csv(csv_path + csv_name)
 
     print('\nFinish data_' + str(data_num) + '.......\n\n')
 
