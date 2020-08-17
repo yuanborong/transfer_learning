@@ -64,7 +64,7 @@ for data_num in range(1, 2):
             train_feature_true_y = train_ori.loc[: , drg_name] > 0
             sample_y = train_ori.loc[train_feature_true_y]
             if sample_y.shape[0] == 0 :
-                distance_dataframe.loc[disease_list.iloc[disease_num_x, 0], drg_name] = 0
+                # distance_dataframe.loc[disease_list.iloc[disease_num_x, 0], drg_name] = 0
                 continue
 
             sample_x_y_mean_distance = calculate_mean_distance(sample_x , sample_y)
