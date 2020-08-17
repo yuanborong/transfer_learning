@@ -38,7 +38,7 @@ for i in range(315):
     columns_name = 'Drg' + str(i)
     dataframe_columns_name_list.append(columns_name)
 
-distance_dataframe = pd.DataFrame(index=disease_list[: , 0], columns=dataframe_columns_name_list)
+distance_dataframe = pd.DataFrame(index=disease_list.iloc[: , 0], columns=dataframe_columns_name_list)
 
 for data_num in range(1, 2):
     # set each data result csv's name
