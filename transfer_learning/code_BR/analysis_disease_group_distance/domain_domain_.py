@@ -34,7 +34,7 @@ csv_path = '/home/huxinhou/WorkSpace_BR/transfer_learning/result/analysis_diseas
 # 创建一个df记录 “ 2. 全局模型分别对各个亚组样本的AUC。”
 dataframe_columns_name_list = []
 for i in range(315):
-    columns_name = 'Drg' + i
+    columns_name = 'Drg' + str(i)
     dataframe_columns_name_list.append(columns_name)
 
 distance_dataframe = pd.DataFrame(index=['Drg0'], columns=dataframe_columns_name_list)
@@ -57,7 +57,7 @@ for data_num in range(1, 2):
         sample_x = train_ori.loc[train_feature_true]
 
         for disease_num_y in range(315):
-            drg_name = 'Drg' + disease_num_y
+            drg_name = 'Drg' + str(disease_num_y)
             train_feature_true_y = train_ori.loc[: , drg_name] > 0
             sample_y = train_ori.loc[train_feature_true_y]
 
