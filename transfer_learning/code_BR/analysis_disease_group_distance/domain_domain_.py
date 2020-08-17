@@ -38,11 +38,11 @@ for i in range(315):
     columns_name = 'Drg' + str(i)
     dataframe_columns_name_list.append(columns_name)
 
-distance_dataframe = pd.DataFrame(index=['Drg0'], columns=dataframe_columns_name_list)
+distance_dataframe = pd.DataFrame(index=disease_list[: , 0], columns=dataframe_columns_name_list)
 
 for data_num in range(1, 2):
     # set each data result csv's name
-    csv_name = 'distance_in_drg0.csv'
+    csv_name = 'distance.csv'
     # test data
     test_ori = pd.read_csv('/home/liukang/Doc/valid_df/test_{}.csv'.format(data_num))
     # training data
@@ -52,7 +52,7 @@ for data_num in range(1, 2):
     X_train_all_data = train_ori.drop(['Label'], axis=1)
     y_train_all_data = train_ori['Label']
 
-    for disease_num_x in [0]:
+    for disease_num_x in range(disease_list[: , 0]):
         # find patients with a certain disease
         train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num_x, 0]] > 0
         sample_x = train_ori.loc[train_feature_true]
@@ -68,6 +68,8 @@ for data_num in range(1, 2):
 
             sample_x_y_mean_distance = calculate_mean_distance(sample_x , sample_y)
             distance_dataframe.loc[disease_list.iloc[disease_num_x, 0] , drg_name] = sample_x_y_mean_distance
+
+        print("Finish " + str(disease_list.iloc[disease_num_x, 0]) + ".....")
 
     distance_dataframe.to_csv(csv_path + csv_name)
 
