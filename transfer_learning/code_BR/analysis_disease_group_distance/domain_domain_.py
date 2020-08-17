@@ -57,6 +57,8 @@ for data_num in range(1, 2):
         sample_x = train_ori.loc[train_feature_true]
 
         for disease_num_y in range(315):
+            if disease_num_y == 0:
+                continue
             drg_name = 'Drg' + str(disease_num_y)
             train_feature_true_y = train_ori.loc[: , drg_name] > 0
             sample_y = train_ori.loc[train_feature_true_y]
