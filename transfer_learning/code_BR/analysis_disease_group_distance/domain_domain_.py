@@ -52,7 +52,7 @@ for data_num in range(1, 2):
     X_train_all_data = train_ori.drop(['Label'], axis=1)
     y_train_all_data = train_ori['Label']
 
-    for disease_num_x in range(disease_list.iloc[: , 0]):
+    for disease_num_x in range(disease_list.shape[0]):
         # find patients with a certain disease
         train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num_x, 0]] > 0
         sample_x = train_ori.loc[train_feature_true]
@@ -64,6 +64,7 @@ for data_num in range(1, 2):
             train_feature_true_y = train_ori.loc[: , drg_name] > 0
             sample_y = train_ori.loc[train_feature_true_y]
             if sample_y.shape[0] == 0 :
+                distance_dataframe.loc[disease_list.iloc[disease_num_x, 0], drg_name] = 0
                 continue
 
             sample_x_y_mean_distance = calculate_mean_distance(sample_x , sample_y)
