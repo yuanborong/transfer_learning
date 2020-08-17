@@ -8,16 +8,16 @@ warnings.filterwarnings('ignore')
 
 def calculate_mean_distance(df_x , df_y):
 
-    df_x_index_list = df_x.index.tolist()
-    df_y_index_list = df_y.index.tolist()
+    # df_x_index_list = df_x.index.tolist()
+    # df_y_index_list = df_y.index.tolist()
     distance1 = 0.0
 
     for i in range(df_x.shape[0]):
         print(df_y.shape[0])
-        sample_x = df_x.iloc[df_x_index_list[i] , :]
+        sample_x = df_x.iloc[i , :]
         distance2 = 0.0
         for j in range(df_y.shape[0]):
-            sample_y = df_y.iloc[df_y_index_list[j] , :]
+            sample_y = df_y.iloc[j , :]
             distance2 += np.linalg.norm(sample_x - sample_y)
         distance1 += (distance2 / df_y.shape[0])
 
