@@ -13,6 +13,7 @@ def calculate_mean_distance(df_x , df_y):
     distance1 = 0.0
 
     for i in range(df_x.shape[0]):
+        print(df_y.shape[0])
         sample_x = df_x.iloc[df_x_index_list[i] , :]
         distance2 = 0.0
         for j in range(df_y.shape[0]):
