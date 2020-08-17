@@ -52,7 +52,7 @@ for data_num in range(1, 2):
     X_train_all_data = train_ori.drop(['Label'], axis=1)
     y_train_all_data = train_ori['Label']
 
-    for disease_num_x in range(disease_list[: , 0]):
+    for disease_num_x in range(disease_list.iloc[: , 0]):
         # find patients with a certain disease
         train_feature_true = train_ori.loc[:, disease_list.iloc[disease_num_x, 0]] > 0
         sample_x = train_ori.loc[train_feature_true]
